@@ -1,5 +1,5 @@
 import type { BridgeRoute, BridgeApiResponse } from '../types'
-import { MOCK_BRIDGE_ROUTES } from '../components/BridgeAggregator'
+import BridgeAggregator, { MOCK_BRIDGE_ROUTES } from '../components/BridgeAggregator'
 
 /**
  * Поиск маршрутов для моста
@@ -16,16 +16,16 @@ export async function searchBridgeRoutes(params: {
   await new Promise(resolve => setTimeout(resolve, 1000))
   
   // Фильтрация моковых данных по выбранным сетям
-  const filteredRoutes = MOCK_BRIDGE_ROUTES.filter(route => 
+  const filteredRoutes = MOCK_BRIDGE_ROUTES.filter((route: BridgeRoute) =>
     route.fromChain.toLowerCase() === params.fromChain.toLowerCase() &&
     route.toChain.toLowerCase() === params.toChain.toLowerCase()
   )
-  
+
   // Если нет подходящих маршрутов, возвращаем все (для демо)
   const routes = filteredRoutes.length > 0 ? filteredRoutes : MOCK_BRIDGE_ROUTES
-  
+
   // Пересчитываем суммы на основе введенного amount
-  const adjustedRoutes: BridgeRoute[] = routes.map(route => ({
+  const adjustedRoutes: BridgeRoute[] = routes.map((route: BridgeRoute) => ({
     ...route,
     fromAmount: params.amount,
     toAmount: params.amount * (route.toAmount / route.fromAmount),

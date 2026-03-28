@@ -1,7 +1,7 @@
 import React from 'react'
-import { TrendingDown, TrendingUp, Minus, Clock, Zap, Leaf, DollarSign } from 'lucide-react'
+import { TrendingDown, TrendingUp, Minus, Clock, Zap, Leaf } from 'lucide-react'
 import type { GasPrice, AIPrediction } from '../types'
-import { formatGasPrice, getGasStatusColor, getGasStatusBgColor, formatCurrency } from '../utils/formatters'
+import { formatGasPrice, getGasStatusColor, getGasStatusBgColor } from '../utils/formatters'
 
 // Моковые данные для газа
 const MOCK_GAS_PRICES: Record<string, GasPrice> = {
@@ -175,7 +175,7 @@ const GasTrackerCard: React.FC = () => {
 
           {/* Типы транзакций */}
           <div className="space-y-3 mb-6">
-            {transactionTypes.map((type, index) => (
+            {transactionTypes.map((type) => (
               <div
                 key={type.name}
                 className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 hover:scale-[1.02] cursor-pointer ${getGasStatusBgColor(type.price)}`}

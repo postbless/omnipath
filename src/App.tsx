@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Zap, ArrowDown, BarChart3, Layers, Settings, Bell, Menu, Calendar as CalendarIcon } from 'lucide-react'
+import { ArrowDown, BarChart3, Settings, Bell, Menu, Calendar as CalendarIcon } from 'lucide-react'
 import NetworksDashboard from './components/NetworksDashboard'
 import BridgeAggregator from './components/BridgeAggregator'
 import SettingsModal from './components/ui/SettingsModal'

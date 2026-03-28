@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Activity, TrendingUp, TrendingDown, Clock, Zap, Leaf, BarChart3, Layers, ArrowRight, Sparkles, Calculator } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts'
+import { Activity, TrendingUp, TrendingDown, Clock, Leaf, BarChart3, Layers, Sparkles, Calculator } from 'lucide-react'
+import { AreaChart, Area, BarChart, Bar } from 'recharts'
 import { CryptoIcon } from './ui/CryptoIcons'
 import { NetworkCard } from './ui/NetworkCard'
 import { MOCK_GAS_PRICES, MOCK_AI_PREDICTION } from './GasTrackerCard'
 import GasCalculator from './ui/GasCalculator'
-import type { GasPrice, AIPrediction } from '../types'
-import { formatGasPrice, formatCurrency } from '../utils/formatters'
+import type { GasPrice } from '../types'
+import { formatGasPrice } from '../utils/formatters'
 
 // Генерация моковых данных для графиков
 const generateChartData = (basePrice: number, points: number = 24) => {
@@ -113,7 +113,7 @@ const StatCard: React.FC<{
 
 const NetworksDashboard: React.FC = () => {
   const [selectedNetwork, setSelectedNetwork] = useState<string>('ethereum')
-  const [activeTab, setActiveTab] = useState<'overview' | 'comparison'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'comparison'>('overview' as 'overview' | 'comparison')
   const [chartData, setChartData] = useState<Array<{ time: string; price: number }>>([])
   const [animatedStats, setAnimatedStats] = useState({ ethPrice: 0, networks: 0 })
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false)

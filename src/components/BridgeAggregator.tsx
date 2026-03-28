@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowDown, Search, Check, ExternalLink, Clock, DollarSign, ArrowRight, Shield, Zap, TrendingUp, Sparkles } from 'lucide-react'
+import { ArrowDown, Search, Check, ExternalLink, Clock, DollarSign, ArrowRight, Shield, TrendingUp } from 'lucide-react'
 import { CryptoIcon } from './ui/CryptoIcons'
 import type { BridgeRoute } from '../types'
 import { formatCurrency, formatNumber } from '../utils/formatters'

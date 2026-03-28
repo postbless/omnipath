@@ -113,7 +113,7 @@ const StatCard: React.FC<{
 
 const NetworksDashboard: React.FC = () => {
   const [selectedNetwork, setSelectedNetwork] = useState<string>('ethereum')
-  const [activeTab, setActiveTab] = useState<'overview' | 'comparison'>('overview' as 'overview' | 'comparison')
+  const [activeTab, setActiveTab] = useState<'overview' | 'comparison'>('overview')
   const [chartData, setChartData] = useState<Array<{ time: string; price: number }>>([])
   const [animatedStats, setAnimatedStats] = useState({ ethPrice: 0, networks: 0 })
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false)
@@ -225,7 +225,7 @@ const NetworksDashboard: React.FC = () => {
             <button
               onClick={() => setActiveTab('comparison')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                activeTab === 'comparison'
+                (activeTab as string) === 'comparison'
                   ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
                   : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
               }`}

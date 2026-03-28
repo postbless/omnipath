@@ -1,5 +1,5 @@
 import React from 'react'
-import { TrendingDown, TrendingUp, Minus, Clock, Zap, Leaf } from 'lucide-react'
+import { TrendingDown, TrendingUp, Minus, Clock, Zap, Leaf, DollarSign } from 'lucide-react'
 import type { GasPrice, AIPrediction } from '../types'
 import { formatGasPrice, getGasStatusColor, getGasStatusBgColor } from '../utils/formatters'
 

@@ -14,7 +14,7 @@ const SUPPORTED_NETWORKS = [
 ] as const
 
 // Моковые данные для мостов
-const MOCK_BRIDGE_ROUTES: BridgeRoute[] = [
+export const MOCK_BRIDGE_ROUTES: BridgeRoute[] = [
   {
     id: '1',
     bridgeName: 'Li.Fi',

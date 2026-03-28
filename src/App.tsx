@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { ArrowDown, BarChart3, Settings, Bell, Menu, Calendar as CalendarIcon } from 'lucide-react'
 import NetworksDashboard from './components/NetworksDashboard'
 import BridgeAggregator from './components/BridgeAggregator'

@@ -1,0 +1,278 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-black text-white;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* Плавная прокрутка */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Кастомный скроллбар */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-black;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-orange-600/50 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-orange-500;
+  }
+}
+
+@layer components {
+  /* Glassmorphism карточка OmniPath */
+  .omni-card {
+    @apply bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/50 rounded-2xl
+           hover:border-orange-500/30 transition-all duration-500;
+  }
+
+  .omni-card:hover {
+    box-shadow: 0 8px 32px 0 rgba(234, 88, 12, 0.15);
+  }
+
+  /* Градиентная рамка OmniPath */
+  .omni-border {
+    @apply relative p-[1px] rounded-2xl overflow-hidden;
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #ea580c 100%);
+    background-size: 200% 200%;
+    animation: gradient-x 3s ease infinite;
+  }
+
+  /* Кнопка OmniPath */
+  .omni-button {
+    @apply px-6 py-3 rounded-xl font-semibold transition-all duration-300
+           bg-gradient-to-r from-orange-600 to-orange-500
+           hover:from-orange-500 hover:to-orange-400
+           active:scale-95;
+  }
+
+  .omni-button {
+    box-shadow: 0 8px 24px rgba(234, 88, 12, 0.25);
+  }
+
+  .omni-button:hover {
+    box-shadow: 0 12px 40px rgba(234, 88, 12, 0.4);
+  }
+
+  /* Вторичная кнопка */
+  .omni-button-secondary {
+    @apply px-6 py-3 rounded-xl font-semibold transition-all duration-300
+           bg-zinc-800/50 border border-zinc-700
+           hover:bg-zinc-700/50 hover:border-orange-500/50
+           active:scale-95;
+  }
+
+  /* Анимированный градиент */
+  .animated-gradient {
+    @apply bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500;
+    background-size: 200% 200%;
+    animation: gradient-x 3s ease infinite;
+  }
+
+  /* Свечение */
+  .glow-orange {
+    box-shadow: 0 0 60px rgba(234, 88, 12, 0.4);
+  }
+
+  .glow-orange-sm {
+    box-shadow: 0 0 20px rgba(234, 88, 12, 0.3);
+  }
+
+  .shadow-glow-orange {
+    box-shadow: 0 0 40px rgba(234, 88, 12, 0.4);
+  }
+
+  .shadow-glow-emerald {
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.4);
+  }
+
+  /* Пульсирующее свечение */
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(234, 88, 12, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(234, 88, 12, 0.6);
+    }
+  }
+
+  /* Карточка с эффектом парения */
+  .floating-card {
+    @apply transition-transform duration-500;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Инпут OmniPath */
+  .omni-input {
+    @apply w-full px-4 py-3 rounded-xl bg-zinc-900/50 border border-zinc-700
+           text-white placeholder-zinc-500
+           focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20
+           transition-all duration-300 outline-none;
+  }
+
+  /* Тоггл переключатель */
+  .omni-toggle {
+    @apply relative w-12 h-6 rounded-full bg-zinc-700 cursor-pointer
+           transition-colors duration-300;
+  }
+
+  .omni-toggle.active {
+    @apply bg-orange-500;
+  }
+
+  .omni-toggle::after {
+    content: '';
+    @apply absolute top-1 left-1 w-4 h-4 rounded-full bg-white
+           transition-transform duration-300;
+  }
+
+  .omni-toggle.active::after {
+    @apply translate-x-6;
+  }
+
+  /* Слайдер */
+  .omni-slider {
+    @apply w-full h-2 rounded-full bg-zinc-800 cursor-pointer
+           appearance-none outline-none;
+  }
+
+  .omni-slider::-webkit-slider-thumb {
+    @apply w-4 h-4 rounded-full bg-orange-500 cursor-pointer
+           appearance-none transition-transform duration-200
+           hover:scale-125;
+  }
+}
+
+@layer utilities {
+  /* Утилиты для анимаций */
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-500 { animation-delay: 500ms; }
+
+  /* Градиентный текст */
+  .text-gradient {
+    @apply bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 bg-clip-text text-transparent;
+  }
+
+  /* Скрытие скроллбара */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Плавные переходы */
+  .transition-smooth {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Эффект свечения при наведении */
+  .hover-glow {
+    @apply transition-shadow duration-300;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 40px rgba(234, 88, 12, 0.3);
+  }
+
+  /* Маска для градиента */
+  .gradient-mask {
+    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  }
+}
+
+/* Глобальные стили для графиков Recharts */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: #27272a;
+  stroke-opacity: 0.5;
+}
+
+.recharts-text {
+  fill: #71717a;
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+
+.recharts-default-tooltip {
+  background-color: #18181b !important;
+  border: 1px solid #27272a !important;
+  border-radius: 12px !important;
+}
+
+.recharts-tooltip-label {
+  color: #fafafa !important;
+}
+
+.recharts-tooltip-item {
+  color: #f97316 !important;
+}
+
+/* Выделение текста */
+::selection {
+  @apply bg-orange-500/30 text-white;
+}
+
+/* Плавные переходы для всех интерактивных элементов */
+a, button, input, select {
+  @apply transition-all duration-300;
+}
+
+/* Фокус для форм */
+input:focus, select:focus, textarea:focus {
+  @apply outline-none ring-2 ring-orange-500/50 ring-offset-2 ring-offset-black;
+}
+
+/* Фоновый градиент */
+.bg-omni {
+  background: radial-gradient(ellipse at top, rgba(234, 88, 12, 0.1) 0%, transparent 50%),
+              radial-gradient(ellipse at bottom, rgba(249, 115, 22, 0.05) 0%, transparent 50%),
+              #000000;
+}
+
+/* Частицы на фоне */
+.particles {
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(234, 88, 12, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 80% 70%, rgba(249, 115, 22, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 40% 80%, rgba(234, 88, 12, 0.05) 2px, transparent 2px),
+    radial-gradient(circle at 60% 20%, rgba(249, 115, 22, 0.05) 2px, transparent 2px);
+  background-size: 100px 100px, 150px 150px, 200px 200px, 250px 250px;
+  animation: particles-move 60s linear infinite;
+}
+
+@keyframes particles-move {
+  0% { background-position: 0 0; }
+  100% { background-position: 100px 100px; }
+}

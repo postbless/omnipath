@@ -1,0 +1,26 @@
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!--defs>
+    <linearGradient id="omniGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#ea580c"/>
+      <stop offset="50%" stopColor="#f97316"/>
+      <stop offset="100%" stopColor="#fb923c"/>
+    </linearGradient>
+  </defs-->
+  
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="url(#omniGradient)"/>
+  
+  <!-- Main lightning bolt -->
+  <path d="M52 15 L51 42 L68 45 L48 75 L49 48 L32 45 Z" fill="white"/>
+  
+  <!-- Secondary elements for depth -->
+  <path d="M52 15 L51 42 L68 45 L52 15 Z" fill="white" fillOpacity="0.7"/>
+  <path d="M49 48 L48 75 L68 45 L49 48 Z" fill="white" fillOpacity="0.5"/>
+  
+  <!-- Orbit rings -->
+  <ellipse cx="50" cy="50" rx="40" ry="15" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" transform="rotate(-30 50 50)"/>
+  <ellipse cx="50" cy="50" rx="40" ry="15" stroke="white" strokeOpacity="0.3" strokeWidth="1.5" transform="rotate(30 50 50)"/>
+  
+  <!-- Center dot -->
+  <circle cx="50" cy="50" r="3" fill="white"/>
+</svg>

@@ -7,6 +7,7 @@ import { MOCK_GAS_PRICES, MOCK_AI_PREDICTION } from './GasTrackerCard'
 import GasCalculator from './ui/GasCalculator'
 import type { GasPrice } from '../types'
 import { formatGasPrice } from '../utils/formatters'
+import { getTronGasData, getTRXPrice } from '../api/tronGas'
 
 // Генерация моковых данных для графиков
 const generateChartData = (basePrice: number, points: number = 24) => {
@@ -201,9 +202,64 @@ const NetworksDashboard: React.FC = () => {
   const [chartData, setChartData] = useState<Array<{ time: string; price: number }>>([])
   const [animatedStats, setAnimatedStats] = useState({ ethPrice: 0, networks: 0 })
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false)
+  const [tronData, setTronData] = useState<GasPrice & { sparklineData: number[]; change24h: number } | null>(null)
 
   const networks = Object.values(EXTENDED_MOCK_GAS_PRICES)
   const selectedNetworkData = EXTENDED_MOCK_GAS_PRICES[selectedNetwork]
+
+  // Получение реальных данных Tron
+  useEffect(() => {
+    const fetchTronData = async () => {
+      try {
+        const [gasData, trxPrice] = await Promise.all([
+          getTronGasData(),
+          getTRXPrice(),
+        ])
+
+        const tronGasInGwei = gasData.energyPrice / 1000 // примерная конвертация
+
+        const tronNetwork: GasPrice & { sparklineData: number[]; change24h: number } = {
+          chainId: 728126428,
+          chainName: 'Tron',
+          timestamp: Date.now(),
+          prices: {
+            slow: {
+              maxPriorityFeePerGas: tronGasInGwei * 0.8,
+              maxFeePerGas: tronGasInGwei,
+              estimatedTime: '~3 min',
+            },
+            average: {
+              maxPriorityFeePerGas: tronGasInGwei,
+              maxFeePerGas: tronGasInGwei * 1.3,
+              estimatedTime: '~1 min',
+            },
+            fast: {
+              maxPriorityFeePerGas: tronGasInGwei * 1.5,
+              maxFeePerGas: tronGasInGwei * 2,
+              estimatedTime: '~20 sec',
+            },
+          },
+          baseFee: tronGasInGwei,
+          trend: 'stable' as const,
+          sparklineData: [450, 440, 430, 420, 430, 440, 420, 410, 420, 430, 425, 420],
+          change24h: -2.5,
+        }
+
+        setTronData(tronNetwork)
+      } catch (error) {
+        console.warn('Failed to fetch Tron data:', error)
+      }
+    }
+
+    fetchTronData()
+    const interval = setInterval(fetchTronData, 60000) // обновляем каждую минуту
+    return () => clearInterval(interval)
+  }, [])
+
+  // Объединяем все сети + Tron
+  const allNetworks = tronData 
+    ? [...networks, tronData] 
+    : networks
 
   // Анимация статистики при загрузке
   useEffect(() => {
@@ -245,17 +301,17 @@ const NetworksDashboard: React.FC = () => {
   }, [selectedNetworkData])
 
   // Данные для сравнения сетей
-  const comparisonData = networks.map(n => ({
+  const comparisonData = allNetworks.map(n => ({
     name: n.chainName.slice(0, 4),
     fullName: n.chainName,
     price: n.baseFee,
-    change: n.change24h,
+    change: n.change24h || 0,
   }))
 
   return (
     <div className="animate-slide-up">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* Stats Overview - Адаптивная сетка */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatCard
           icon={<Activity className="w-4 h-4" />}
           label="Средний газ (ETH)"
@@ -283,7 +339,7 @@ const NetworksDashboard: React.FC = () => {
         <StatCard
           icon={<Layers className="w-4 h-4" />}
           label="Активных сетей"
-          value={`${animatedStats.networks}`}
+          value={`${Math.max(5, allNetworks.length)}`}
           change="ETH, L2s, Polygon"
           delay={300}
         />
@@ -291,11 +347,11 @@ const NetworksDashboard: React.FC = () => {
 
       {activeTab === 'overview' ? (
         <>
-          {/* Вкладки */}
-          <div className="flex items-center gap-2 mb-6">
+          {/* Вкладки - с горизонтальным скроллом на мобильных */}
+          <div className="flex items-center gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2 no-scrollbar">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap ${
                 activeTab === 'overview'
                   ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
                   : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
@@ -303,12 +359,12 @@ const NetworksDashboard: React.FC = () => {
             >
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
-                Обзор сетей
+                Обзор
               </div>
             </button>
             <button
               onClick={() => setActiveTab('comparison')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap ${
                 (activeTab as string) === 'comparison'
                   ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
                   : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
@@ -321,9 +377,9 @@ const NetworksDashboard: React.FC = () => {
             </button>
           </div>
 
-          {/* Сетка сетей */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {networks.map((network, index) => (
+          {/* Сетка сетей - 1 колонка на мобильных, 2 на планшетах, 3 на десктопе */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+            {allNetworks.map((network, index) => (
               <div
                 key={network.chainId}
                 className="animate-scale-in"
@@ -341,34 +397,34 @@ const NetworksDashboard: React.FC = () => {
 
           {/* Детальный график выбранной сети */}
           <div className="omni-card p-6 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <CryptoIcon chain={selectedNetworkData.chainName} size={40} />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="relative flex-shrink-0">
+                  <CryptoIcon chain={selectedNetworkData.chainName} size={32} />
                   <div className="absolute -inset-2 rounded-full bg-orange-500/10 blur-lg animate-pulse" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-white">{selectedNetworkData.chainName}</h2>
-                  <p className="text-sm text-zinc-500">История цен за 24 часа</p>
+                  <h2 className="text-lg sm:text-xl font-bold text-white">{selectedNetworkData.chainName}</h2>
+                  <p className="text-xs sm:text-sm text-zinc-500 hidden sm:block">История цен за 24 часа</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
                 <button
                   onClick={() => setIsCalculatorOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800/50 border border-zinc-700 hover:border-orange-500/50 transition-all"
+                  className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-zinc-800/50 border border-zinc-700 hover:border-orange-500/50 transition-all flex-shrink-0"
                 >
                   <Calculator className="w-4 h-4 text-orange-500" />
-                  <span className="text-sm font-medium text-white hidden sm:inline">Калькулятор</span>
+                  <span className="text-xs sm:text-sm font-medium text-white hidden sm:inline">Калькулятор</span>
                 </button>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-white">{formatGasPrice(selectedNetworkData.baseFee)}</p>
-                  <p className={`text-sm ${selectedNetworkData.change24h >= 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                    {selectedNetworkData.change24h >= 0 ? '+' : ''}{selectedNetworkData.change24h}% (24h)
+                <div className="text-right flex-shrink-0">
+                  <p className="text-lg sm:text-2xl font-bold text-white">{formatGasPrice(selectedNetworkData.baseFee)}</p>
+                  <p className={`text-xs sm:text-sm ${selectedNetworkData.change24h >= 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                    {selectedNetworkData.change24h >= 0 ? '+' : ''}{selectedNetworkData.change24h}%
                   </p>
                 </div>
               </div>
             </div>
-            <div className="h-64 animate-fade-in">
+            <div className="h-48 sm:h-56 md:h-64 animate-fade-in">
               <ResponsiveContainer>
                 <AreaChart data={chartData}>
                   <defs>
@@ -516,28 +572,28 @@ const NetworksDashboard: React.FC = () => {
       )}
 
       {/* AI Recommendation Banner */}
-      <div className="mt-8 omni-border animate-float">
-        <div className="relative bg-zinc-900 rounded-2xl p-6">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl" />
-          <div className="flex items-start gap-4 relative z-10">
-            <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/30">
-              <Sparkles className="w-6 h-6 text-orange-400" />
+      <div className="mt-6 sm:mt-8 omni-border animate-float">
+        <div className="relative bg-zinc-900 rounded-2xl p-4 sm:p-6">
+          <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-orange-500/10 rounded-full blur-3xl" />
+          <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 relative z-10">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 flex-shrink-0">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-orange-400" />
             </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-white mb-2">AI Insight</h3>
-              <p className="text-zinc-400 mb-3">{MOCK_AI_PREDICTION.message}</p>
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-500">Ожидаемое изменение:</span>
-                  <span className="text-sm font-bold text-emerald-500">{MOCK_AI_PREDICTION.expectedChange}%</span>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base sm:text-lg font-bold text-white mb-2">AI Insight</h3>
+              <p className="text-sm sm:text-base text-zinc-400 mb-3">{MOCK_AI_PREDICTION.message}</p>
+              <div className="flex flex-wrap gap-2 sm:gap-4">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="text-xs sm:text-sm text-zinc-500">Изменение:</span>
+                  <span className="text-xs sm:text-sm font-bold text-emerald-500">{MOCK_AI_PREDICTION.expectedChange}%</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-500">Оптимальное время:</span>
-                  <span className="text-sm font-bold text-white">{MOCK_AI_PREDICTION.timeUntilOptimal}</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="text-xs sm:text-sm text-zinc-500">Время:</span>
+                  <span className="text-xs sm:text-sm font-bold text-white">{MOCK_AI_PREDICTION.timeUntilOptimal}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-500">Точность:</span>
-                  <span className="text-sm font-bold text-orange-500">{MOCK_AI_PREDICTION.confidence}%</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="text-xs sm:text-sm text-zinc-500">Точность:</span>
+                  <span className="text-xs sm:text-sm font-bold text-orange-500">{MOCK_AI_PREDICTION.confidence}%</span>
                 </div>
               </div>
             </div>

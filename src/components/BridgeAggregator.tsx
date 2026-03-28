@@ -17,6 +17,7 @@ const SUPPORTED_NETWORKS = [
   { id: 'blast', name: 'Blast', symbol: 'ETH', color: '#FF8800' },
   { id: 'mode', name: 'Mode', symbol: 'ETH', color: '#FF0080' },
   { id: 'manta', name: 'Manta', symbol: 'ETH', color: '#1FB6FF' },
+  { id: 'tron', name: 'Tron', symbol: 'TRX', color: '#D9183C' },
 ] as const
 
 // Моковые данные для мостов

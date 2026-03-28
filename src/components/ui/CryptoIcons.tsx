@@ -175,6 +175,15 @@ const FALLBACK_ICONS: Record<string, JSX.Element> = {
       <circle cx="16" cy="16" r="3" fill="white"/>
     </svg>
   ),
+  tron: (
+    <svg viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#D9183C"/>
+      <path d="M16 8L13 12H19L16 8Z" fill="white"/>
+      <path d="M13 12L10 16L13 20L16 16L13 12Z" fill="white"/>
+      <path d="M19 12L16 16L19 20L22 16L19 12Z" fill="white"/>
+      <circle cx="16" cy="16" r="3" fill="#D9183C"/>
+    </svg>
+  ),
 }
 
 export const CryptoIcon: React.FC<CryptoIconProps> = ({ chain, className = '', size = 32 }) => {

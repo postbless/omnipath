@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Settings, X, Bell, Palette, Globe, Shield, ChevronDown, Info, Zap, Moon, Sun } from 'lucide-react'
+import { Settings, X, Bell, Palette, Globe, Shield, ChevronDown, Info } from 'lucide-react'
 import { setLanguage, getLanguage, type Language } from '../../utils/i18n'
 
 interface SettingsModalProps {
@@ -279,7 +279,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               value={general.language}
               onChange={(v) => {
                 setLanguage(v as Language)
-                setGeneral({ ...general, language: v })
+                setGeneral({ ...general, language: v as Language })
               }}
               options={[
                 { value: 'ru', label: 'Русский' },

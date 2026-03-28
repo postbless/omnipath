@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Zap, ArrowRight, Sparkles, TrendingUp, Shield, Globe } from 'lucide-react'
+import { ArrowRight, Sparkles, TrendingUp, Globe } from 'lucide-react'
 import { OmniPathLogo } from './CryptoIcons'
 
 interface WelcomeScreenProps {

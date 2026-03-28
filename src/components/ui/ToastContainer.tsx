@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Bell, AlertTriangle, CheckCircle, Info, X, TrendingUp, TrendingDown } from 'lucide-react'
+import { AlertTriangle, CheckCircle, Info, X, TrendingUp, TrendingDown } from 'lucide-react'
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info' | 'gas-alert'
 

@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react'
 import type { BridgeRoute } from '../types'
 import { searchBridgeRoutes } from '../api/bridges'
 import { useDashboardStore } from '../store'
-import { DEFAULT_VALUES } from '../utils/constants'
 
 interface UseBridgeRoutesReturn {
   routes: BridgeRoute[]

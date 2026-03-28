@@ -1,6 +1,5 @@
 import React from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
-import type { GasPrice } from '../../types'
 
 interface GasChartProps {
   data: Array<{
@@ -81,7 +80,7 @@ export const MiniSparkline: React.FC<MiniSparklineProps> = ({
   color,
   width = 100,
   height = 40,
-  trend,
+  trend: _trend,
 }) => {
   const chartData = data.map((price, index) => ({
     time: index.toString(),

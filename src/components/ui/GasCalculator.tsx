@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Calculator, TrendingUp, TrendingDown, Zap, Clock, DollarSign, X, Coins } from 'lucide-react'
+import { Calculator, TrendingUp, TrendingDown, Zap, X } from 'lucide-react'
 import type { GasPrice } from '../../types'
 import { formatGasPrice, formatCurrency } from '../../utils/formatters'
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import { TrendingUp, TrendingDown, Minus, Activity, Zap, Clock, CheckCircle, DollarSign } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Activity, Zap, Clock, CheckCircle } from 'lucide-react'
 import { CryptoIcon } from './CryptoIcons'
 import { MiniSparkline } from './GasChart'
 import type { GasPrice } from '../../types'

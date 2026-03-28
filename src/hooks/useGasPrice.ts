@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { GasPrice, AIPrediction } from '../types'
-import { getGasPrices, getGasPriceByChain, getAIPrediction } from '../api/gas'
+import { getGasPrices } from '../api/gas'
 import { DEFAULT_VALUES } from '../utils/constants'
 
 interface UseGasPriceReturn {

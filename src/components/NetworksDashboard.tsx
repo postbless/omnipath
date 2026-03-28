@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Activity, TrendingUp, TrendingDown, Clock, Leaf, BarChart3, Layers, Sparkles, Calculator } from 'lucide-react'
-import { AreaChart, Area, BarChart, Bar } from 'recharts'
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { CryptoIcon } from './ui/CryptoIcons'
 import { NetworkCard } from './ui/NetworkCard'
 import { MOCK_GAS_PRICES, MOCK_AI_PREDICTION } from './GasTrackerCard'
@@ -358,7 +358,7 @@ const NetworksDashboard: React.FC = () => {
                     borderRadius: '12px',
                     color: '#fff',
                   }}
-                  formatter={(value: number, name: string, props: any) => [
+                  formatter={(value: number, _name: string, props: any) => [
                     `${value.toFixed(4)} Gwei`,
                     props.payload.fullName
                   ]}
@@ -367,19 +367,7 @@ const NetworksDashboard: React.FC = () => {
                   dataKey="price"
                   fill="url(#barGradient)"
                   radius={[8, 8, 0, 0]}
-                >
-                  {comparisonData.map((entry, index) => (
-                    <animate
-                      key={index}
-                      attributeName="height"
-                      from="0"
-                      to="100%"
-                      dur="0.5s"
-                      begin={`${index * 0.1}s`}
-                      fill="freeze"
-                    />
-                  ))}
-                </Bar>
+                />
                 <defs>
                   <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#f97316"/>

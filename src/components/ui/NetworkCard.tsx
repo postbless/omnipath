@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, Minus, Activity, Zap, Clock, CheckCircle } from 'lucide-react'
 import { CryptoIcon } from './CryptoIcons'
 import { MiniSparkline } from './GasChart'
 import type { GasPrice } from '../../types'
 import { formatGasPrice, getGasStatusColor } from '../../utils/formatters'
+import { getETHPrice, gweiToUSD } from '../../api/ethPrice'
 
 interface NetworkCardProps {
   network: GasPrice & {
@@ -21,6 +22,15 @@ export const NetworkCard: React.FC<NetworkCardProps> = ({
   isSelected = false,
   compact = false,
 }) => {
+  const [ethPrice, setEthPrice] = useState<number>(2500)
+
+  useEffect(() => {
+    getETHPrice().then(setEthPrice)
+    const interval = setInterval(() => {
+      getETHPrice().then(setEthPrice)
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [])
   const trend = network.trend
   const change24h = network.change24h || 0
   const sparklineData = network.sparklineData || [25, 24, 26, 23, 25, 24, 22, 21, 23, 24]
@@ -58,7 +68,7 @@ export const NetworkCard: React.FC<NetworkCardProps> = ({
           <div className="text-right">
             <p className="text-lg font-bold text-white">{formatGasPrice(network.baseFee)}</p>
             <p className="text-xs text-orange-400 font-medium">
-              ${(network.baseFee * 0.000001 * 2500).toFixed(3)} USDT
+              ${gweiToUSD(network.baseFee, ethPrice).toFixed(4)} USDT
             </p>
             <div className={`flex items-center justify-center gap-1 text-xs ${
               trend === 'down' ? 'text-emerald-500' : trend === 'up' ? 'text-rose-500' : 'text-amber-500'
@@ -115,7 +125,7 @@ export const NetworkCard: React.FC<NetworkCardProps> = ({
           </div>
           <div className="flex items-center justify-end gap-2 text-xs">
             <span className="text-orange-400 font-medium">
-              ${(network.baseFee * 0.000001 * 2500).toFixed(4)} USDT
+              ${gweiToUSD(network.baseFee, ethPrice).toFixed(4)} USDT
             </span>
             <span className="text-zinc-600">|</span>
             <span className="text-zinc-500">{(network.baseFee * 1000000000).toFixed(0)} Gwei</span>
@@ -125,6 +135,7 @@ export const NetworkCard: React.FC<NetworkCardProps> = ({
           }`}>
             {change24h > 0 ? '+' : ''}{change24h.toFixed(2)}% (24h)
           </p>
+          <p className="text-xs text-orange-400 mt-1">ETH: ${ethPrice.toLocaleString()}</p>
         </div>
       </div>
 

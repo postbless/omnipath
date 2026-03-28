@@ -11,6 +11,12 @@ const SUPPORTED_NETWORKS = [
   { id: 'optimism', name: 'Optimism', symbol: 'ETH', color: '#FF0420' },
   { id: 'base', name: 'Base', symbol: 'ETH', color: '#0052FF' },
   { id: 'polygon', name: 'Polygon', symbol: 'MATIC', color: '#8247E5' },
+  { id: 'avalanche', name: 'Avalanche', symbol: 'AVAX', color: '#E84142' },
+  { id: 'fantom', name: 'Fantom', symbol: 'FTM', color: '#13B5EC' },
+  { id: 'scroll', name: 'Scroll', symbol: 'ETH', color: '#000000' },
+  { id: 'blast', name: 'Blast', symbol: 'ETH', color: '#FF8800' },
+  { id: 'mode', name: 'Mode', symbol: 'ETH', color: '#FF0080' },
+  { id: 'manta', name: 'Manta', symbol: 'ETH', color: '#1FB6FF' },
 ] as const
 
 // Моковые данные для мостов

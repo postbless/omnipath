@@ -77,7 +77,91 @@ const EXTENDED_MOCK_GAS_PRICES: Record<string, GasPrice & { sparklineData: numbe
     sparklineData: [45, 42, 40, 38, 36, 35, 34, 33, 32, 31, 30, 32],
     change24h: -18.7,
   },
-}
+  avalanche: {
+    chainId: 43114,
+    chainName: 'Avalanche',
+    timestamp: Date.now(),
+    prices: {
+      slow: { maxPriorityFeePerGas: 20, maxFeePerGas: 25, estimatedTime: '~3 min' },
+      average: { maxPriorityFeePerGas: 28, maxFeePerGas: 35, estimatedTime: '~1 min' },
+      fast: { maxPriorityFeePerGas: 40, maxFeePerGas: 50, estimatedTime: '~20 sec' },
+    },
+    baseFee: 27,
+    trend: 'stable' as const,
+    sparklineData: [30, 29, 28, 27, 28, 29, 27, 26, 27, 28, 27, 27],
+    change24h: -5.2,
+  },
+  fantom: {
+    chainId: 250,
+    chainName: 'Fantom',
+    timestamp: Date.now(),
+    prices: {
+      slow: { maxPriorityFeePerGas: 15, maxFeePerGas: 18, estimatedTime: '~2 min' },
+      average: { maxPriorityFeePerGas: 20, maxFeePerGas: 25, estimatedTime: '~45 sec' },
+      fast: { maxPriorityFeePerGas: 30, maxFeePerGas: 38, estimatedTime: '~15 sec' },
+    },
+    baseFee: 22,
+    trend: 'down' as const,
+    sparklineData: [28, 26, 25, 24, 23, 22, 21, 20, 21, 22, 23, 22],
+    change24h: -15.3,
+  },
+  scroll: {
+    chainId: 534352,
+    chainName: 'Scroll',
+    timestamp: Date.now(),
+    prices: {
+      slow: { maxPriorityFeePerGas: 0.02, maxFeePerGas: 0.05, estimatedTime: '~3 min' },
+      average: { maxPriorityFeePerGas: 0.03, maxFeePerGas: 0.08, estimatedTime: '~1 min' },
+      fast: { maxPriorityFeePerGas: 0.05, maxFeePerGas: 0.12, estimatedTime: '~20 sec' },
+    },
+    baseFee: 0.06,
+    trend: 'stable' as const,
+    sparklineData: [0.08, 0.07, 0.06, 0.05, 0.06, 0.07, 0.06, 0.05, 0.06, 0.07, 0.06, 0.06],
+    change24h: 3.5,
+  },
+  blast: {
+    chainId: 81457,
+    chainName: 'Blast',
+    timestamp: Date.now(),
+    prices: {
+      slow: { maxPriorityFeePerGas: 0.03, maxFeePerGas: 0.07, estimatedTime: '~3 min' },
+      average: { maxPriorityFeePerGas: 0.04, maxFeePerGas: 0.10, estimatedTime: '~1 min' },
+      fast: { maxPriorityFeePerGas: 0.06, maxFeePerGas: 0.15, estimatedTime: '~20 sec' },
+    },
+    baseFee: 0.08,
+    trend: 'up' as const,
+    sparklineData: [0.05, 0.06, 0.07, 0.08, 0.09, 0.08, 0.07, 0.08, 0.09, 0.10, 0.09, 0.08],
+    change24h: 22.1,
+  },
+  mode: {
+    chainId: 34443,
+    chainName: 'Mode',
+    timestamp: Date.now(),
+    prices: {
+      slow: { maxPriorityFeePerGas: 0.02, maxFeePerGas: 0.04, estimatedTime: '~3 min' },
+      average: { maxPriorityFeePerGas: 0.03, maxFeePerGas: 0.06, estimatedTime: '~1 min' },
+      fast: { maxPriorityFeePerGas: 0.04, maxFeePerGas: 0.09, estimatedTime: '~20 sec' },
+    },
+    baseFee: 0.05,
+    trend: 'stable' as const,
+    sparklineData: [0.06, 0.05, 0.05, 0.04, 0.05, 0.06, 0.05, 0.04, 0.05, 0.05, 0.06, 0.05],
+    change24h: -2.8,
+  },
+  manta: {
+    chainId: 169,
+    chainName: 'Manta',
+    timestamp: Date.now(),
+    prices: {
+      slow: { maxPriorityFeePerGas: 0.03, maxFeePerGas: 0.06, estimatedTime: '~3 min' },
+      average: { maxPriorityFeePerGas: 0.04, maxFeePerGas: 0.09, estimatedTime: '~1 min' },
+      fast: { maxPriorityFeePerGas: 0.06, maxFeePerGas: 0.13, estimatedTime: '~20 sec' },
+    },
+    baseFee: 0.07,
+    trend: 'down' as const,
+    sparklineData: [0.10, 0.09, 0.08, 0.07, 0.08, 0.09, 0.08, 0.07, 0.06, 0.07, 0.08, 0.07],
+    change24h: -12.4,
+  },
+} as const
 
 const StatCard: React.FC<{
   icon: React.ReactNode

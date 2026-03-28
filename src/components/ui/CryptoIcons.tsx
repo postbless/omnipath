@@ -149,6 +149,32 @@ const FALLBACK_ICONS: Record<string, JSX.Element> = {
       <path d="M10 16L14 20L22 12" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
+  scroll: (
+    <svg viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#000000"/>
+      <path d="M8 16L12 20L20 10L24 14" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="24" cy="8" r="3" fill="white"/>
+    </svg>
+  ),
+  blast: (
+    <svg viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#FF8800"/>
+      <path d="M16 6L18 12L24 12L19 16L21 22L16 18L11 22L13 16L8 12L14 12L16 6Z" fill="white"/>
+    </svg>
+  ),
+  mode: (
+    <svg viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#FF0080"/>
+      <path d="M10 16L14 20L22 12L26 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  manta: (
+    <svg viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#1FB6FF"/>
+      <ellipse cx="16" cy="16" rx="12" ry="6" stroke="white" strokeWidth="2"/>
+      <circle cx="16" cy="16" r="3" fill="white"/>
+    </svg>
+  ),
 }
 
 export const CryptoIcon: React.FC<CryptoIconProps> = ({ chain, className = '', size = 32 }) => {

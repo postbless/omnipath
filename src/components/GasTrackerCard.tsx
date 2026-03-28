@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { TrendingDown, TrendingUp, Minus, Clock, Zap, Leaf, DollarSign } from 'lucide-react'
 import type { GasPrice, AIPrediction } from '../types'
 import { formatGasPrice, getGasStatusColor, getGasStatusBgColor } from '../utils/formatters'
+import { getETHPrice, gweiToUSD } from '../api/ethPrice'
 
 // Моковые данные для газа
 const MOCK_GAS_PRICES: Record<string, GasPrice> = {
@@ -75,6 +76,19 @@ interface TransactionType {
 const GasTrackerCard: React.FC = () => {
   const gasData = MOCK_GAS_PRICES.ethereum
   const prediction = MOCK_AI_PREDICTION
+  const [ethPrice, setEthPrice] = useState<number>(2500)
+
+  useEffect(() => {
+    // Получаем реальную цену ETH
+    getETHPrice().then(setEthPrice)
+    
+    // Обновляем каждые 30 секунд
+    const interval = setInterval(() => {
+      getETHPrice().then(setEthPrice)
+    }, 30000)
+    
+    return () => clearInterval(interval)
+  }, [])
 
   const transactionTypes: TransactionType[] = [
     {
@@ -161,7 +175,7 @@ const GasTrackerCard: React.FC = () => {
               <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/20 border border-orange-500/30">
                 <DollarSign className="w-4 h-4 text-orange-400" />
                 <span className="text-lg font-bold text-orange-400">
-                  {(gasData.baseFee * 0.000001 * 2500).toFixed(2)}
+                  {gweiToUSD(gasData.baseFee, ethPrice).toFixed(4)}
                 </span>
               </div>
             </div>
@@ -169,7 +183,9 @@ const GasTrackerCard: React.FC = () => {
             <div className="mt-2 flex items-center gap-2 text-xs">
               <span className="text-zinc-600">≈ {(gasData.baseFee * 1000000000).toFixed(0)} Gwei</span>
               <span className="text-zinc-700">|</span>
-              <span className="text-zinc-600">≈ ${(gasData.baseFee * 0.000001 * 2500).toFixed(4)} USDT</span>
+              <span className="text-zinc-600">≈ ${gweiToUSD(gasData.baseFee, ethPrice).toFixed(4)} USDT</span>
+              <span className="text-zinc-700">|</span>
+              <span className="text-orange-400 font-medium">ETH: ${ethPrice.toLocaleString()}</span>
             </div>
           </div>
 
@@ -195,7 +211,7 @@ const GasTrackerCard: React.FC = () => {
                       {formatGasPrice(type.price)}
                     </p>
                     <span className="text-xs text-orange-400 font-medium">
-                      ${(type.price * 0.000001 * 2500).toFixed(3)}
+                      ${gweiToUSD(type.price, ethPrice).toFixed(4)}
                     </span>
                   </div>
                   <p className="text-xs text-zinc-500">{type.time} • {(type.price * 1000000000).toFixed(0)} Gwei</p>

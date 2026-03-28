@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Calculator, TrendingUp, TrendingDown, Zap, X } from 'lucide-react'
 import type { GasPrice } from '../../types'
 import { formatGasPrice, formatCurrency } from '../../utils/formatters'
+import { getETHPrice, gweiToUSD } from '../../api/ethPrice'
 
 interface GasCalculatorProps {
   gasPrice: GasPrice
@@ -11,11 +12,16 @@ interface GasCalculatorProps {
 const GasCalculator: React.FC<GasCalculatorProps> = ({ gasPrice, onClose }) => {
   const [gasLimit, setGasLimit] = useState<string>('21000')
   const [transactionType, setTransactionType] = useState<'slow' | 'average' | 'fast'>('average')
+  const [ethPrice, setEthPrice] = useState<number>(2500)
+
+  useEffect(() => {
+    getETHPrice().then(setEthPrice)
+  }, [])
 
   const selectedGas = gasPrice.prices[transactionType]
   const gasLimitNum = parseFloat(gasLimit) || 0
   const totalGas = (selectedGas.maxFeePerGas * gasLimitNum) / 1000000000 // Convert to ETH
-  const totalUSD = totalGas * 2500 // Approximate ETH price
+  const totalUSD = totalGas * ethPrice
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -114,6 +120,12 @@ const GasCalculator: React.FC<GasCalculatorProps> = ({ gasPrice, onClose }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm text-zinc-400">В Gwei</span>
               <span className="text-zinc-500 font-mono text-sm">{(totalGas * 1000000000).toFixed(0)} Gwei</span>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-zinc-700">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-zinc-500">Цена ETH:</span>
+              <span className="text-orange-400 font-medium">${ethPrice.toLocaleString()}</span>
             </div>
           </div>
         </div>

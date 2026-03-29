@@ -31,7 +31,6 @@ function cachePrices(prices: TokenPrice[]) {
 
 // Получение из кэша
 function getCachedPrices(): TokenPrice[] {
-  // Пробуем localStorage
   if (priceCache.length === 0) {
     try {
       const cached = localStorage.getItem('omnipath_price_cache')
@@ -47,19 +46,18 @@ function getCachedPrices(): TokenPrice[] {
     }
   }
 
-  // Проверяем актуальность
   if (Date.now() - cacheTime < CACHE_TTL) {
     return priceCache
   }
 
-  // Возвращаем дефолтные данные если кэш устарел
+  // Возвращаем дефолтные данные
   return [
     { id: 'ethereum', symbol: 'eth', name: 'Ethereum', current_price: 2500, price_change_percentage_24h: 0, market_cap: 0, total_volume: 0, high_24h: 0, low_24h: 0 },
     { id: 'bitcoin', symbol: 'btc', name: 'Bitcoin', current_price: 65000, price_change_percentage_24h: 0, market_cap: 0, total_volume: 0, high_24h: 0, low_24h: 0 },
   ]
 }
 
-// Основная функция получения цен
+// Основная функция получения цен через Binance API (без CORS)
 export async function getTokenPrices(
   ids: string[] = [
     'ethereum',
@@ -75,38 +73,54 @@ export async function getTokenPrices(
   ]
 ): Promise<TokenPrice[]> {
   try {
-    const url = new URL('https://api.coingecko.com/api/v3/coins/markets')
-    url.searchParams.append('vs_currency', 'usd')
-    url.searchParams.append('ids', ids.join(','))
-    url.searchParams.append('order', 'market_cap_desc')
-    url.searchParams.append('per_page', '100')
-    url.searchParams.append('page', '1')
-    url.searchParams.append('sparkline', 'false')
-    url.searchParams.append('price_change_percentage', '24h')
+    // Binance public API (работает без CORS)
+    const binanceIds: Record<string, string> = {
+      'ethereum': 'ETHUSDT',
+      'bitcoin': 'BTCUSDT',
+      'polygon': 'MATICUSDT',
+      'arbitrum': 'ARBUSDT',
+      'optimism': 'OPUSDT',
+      'avalanche-2': 'AVAXUSDT',
+      'fantom': 'FTMUSDT',
+      'cosmos': 'ATOMUSDT',
+      'bnb': 'BNBUSDT',
+      'solana': 'SOLUSDT',
+    }
 
-    // Используем прокси для обхода CORS
-    const proxyUrl = 'https://api.allorigins.win/raw?url='
-    const targetUrl = encodeURIComponent(url.toString())
+    const symbols = ids
+      .map(id => binanceIds[id])
+      .filter(Boolean)
 
-    const response = await fetch(proxyUrl + targetUrl, {
-      cache: 'no-store',
-      headers: {
-        'Accept': 'application/json',
-      },
-    })
+    if (symbols.length === 0) {
+      return getCachedPrices()
+    }
+
+    const response = await fetch(
+      `https://api.binance.com/api/v3/ticker/24hr?symbols=${JSON.stringify(symbols)}`,
+      { cache: 'no-store' }
+    )
 
     if (!response.ok) {
-      if (response.status === 429) {
-        // Rate limit - используем кэш
-        console.warn('Coingecko rate limit, using cached data')
-        return getCachedPrices()
-      }
-      throw new Error(`Coingecko API error: ${response.status}`)
+      throw new Error(`Binance API error: ${response.status}`)
     }
 
     const data = await response.json()
-    cachePrices(data)
-    return data
+    
+    // Конвертируем в наш формат
+    const prices: TokenPrice[] = data.map((item: any) => ({
+      id: Object.keys(binanceIds).find(key => binanceIds[key] === item.symbol) || item.symbol,
+      symbol: item.symbol.replace('USDT', '').toLowerCase(),
+      name: item.symbol.replace('USDT', ''),
+      current_price: parseFloat(item.lastPrice),
+      price_change_percentage_24h: parseFloat(item.priceChangePercent),
+      market_cap: 0,
+      total_volume: parseFloat(item.volume),
+      high_24h: parseFloat(item.highPrice),
+      low_24h: parseFloat(item.lowPrice),
+    }))
+
+    cachePrices(prices)
+    return prices
   } catch (error) {
     console.error('Error fetching prices:', error)
     return getCachedPrices()

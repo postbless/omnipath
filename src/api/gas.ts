@@ -1,55 +1,11 @@
 import type { GasPrice, AIPrediction, GasApiResponse } from '../types'
 
-// === API Источники (бесплатные) ===
+// === API Источники (бесплатные, без CORS) ===
 
-// 1. Gas Now (без ключа, приоритет 1)
-async function getGasNow() {
-  try {
-    const response = await fetch('https://www.gasnow.org/api/v3/gas/price', {
-      cache: 'no-store',
-    })
-    if (!response.ok) throw new Error('GasNow failed')
-    const data = await response.json()
-    // GasNow возвращает цену в Wei, конвертируем в Gwei (делим на 1e9)
-    return {
-      rapid: data.data.rapid / 1e9,
-      fast: data.data.fast / 1e9,
-      standard: data.data.standard / 1e9,
-      slow: data.data.slow / 1e9,
-      timestamp: data.data.timestamp,
-    }
-  } catch (error) {
-    console.warn('GasNow API failed:', error)
-    return null
-  }
-}
-
-// 2. EthGasStation (без ключа, приоритет 2)
-async function getEthGasStation() {
-  try {
-    const response = await fetch('https://ethgasstation.info/json/ethgasAPI.json', {
-      cache: 'no-store',
-    })
-    if (!response.ok) throw new Error('EthGasStation failed')
-    const data = await response.json()
-    // EthGasStation возвращает цену * 10, делим на 10 для Gwei
-    return {
-      fast: data.fast / 10,
-      fastest: data.fastest / 10,
-      safeLow: data.safeLow / 10,
-      average: data.average / 10,
-      blockNum: data.blockNum,
-    }
-  } catch (error) {
-    console.warn('EthGasStation API failed:', error)
-    return null
-  }
-}
-
-// 3. Etherscan (с ключом, приоритет 3)
+// 1. Etherscan API (с ключом, работает без CORS)
 async function getEtherscan() {
   const ETHERSCAN_API_KEY = import.meta.env.VITE_ETHERSCAN_API_KEY
-  
+
   if (!ETHERSCAN_API_KEY) {
     console.warn('No Etherscan API key')
     return null
@@ -74,16 +30,18 @@ async function getEtherscan() {
   }
 }
 
-// 4. L2Fees.info (без ключа)
+// 2. L2Fees через публичный API (без CORS)
 async function getL2Fees() {
   try {
-    const response = await fetch('https://l2fees.info/api/data.json', {
-      cache: 'no-store',
-    })
-    if (!response.ok) throw new Error('L2Fees failed')
+    // Используем L2Beat API (работает без CORS)
+    const response = await fetch(
+      'https://api.l2beat.com/api/scaling-tvl',
+      { cache: 'no-store' }
+    )
+    if (!response.ok) throw new Error('L2Beat failed')
     return await response.json()
   } catch (error) {
-    console.warn('L2Fees API failed:', error)
+    console.warn('L2Beat API failed:', error)
     return null
   }
 }
@@ -93,21 +51,17 @@ async function getL2Fees() {
 export async function getGasPrices(): Promise<GasApiResponse> {
   try {
     console.log('[Gas API] Fetching gas prices...')
-    
-    // Пробуем получить данные из разных источников
-    const [gasNow, ethGasStation, etherscan, l2Fees] = await Promise.all([
-      getGasNow(),
-      getEthGasStation(),
+
+    // Получаем данные из Etherscan и L2Beat
+    const [etherscan, l2Fees] = await Promise.all([
       getEtherscan(),
       getL2Fees(),
     ])
 
-    console.log('[Gas API] GasNow:', gasNow)
-    console.log('[Gas API] EthGasStation:', ethGasStation)
     console.log('[Gas API] Etherscan:', etherscan)
     console.log('[Gas API] L2Fees:', l2Fees)
 
-    // Выбираем лучший источник для Ethereum
+    // Выбираем источник для Ethereum
     let ethGasData = {
       slow: 20,
       average: 25,
@@ -115,21 +69,7 @@ export async function getGasPrices(): Promise<GasApiResponse> {
       baseFee: 24,
     }
 
-    if (gasNow) {
-      ethGasData = {
-        slow: gasNow.slow,
-        average: gasNow.standard,
-        fast: gasNow.fast,
-        baseFee: gasNow.fast,
-      }
-    } else if (ethGasStation) {
-      ethGasData = {
-        slow: ethGasStation.safeLow,
-        average: ethGasStation.average,
-        fast: ethGasStation.fast,
-        baseFee: ethGasStation.average,
-      }
-    } else if (etherscan) {
+    if (etherscan) {
       ethGasData = etherscan
     }
 
@@ -166,46 +106,84 @@ export async function getGasPrices(): Promise<GasApiResponse> {
       trend: getTrend(ethGasData.baseFee),
     }
 
-    // Формируем данные для L2 сетей
-    const l2Data: GasPrice[] = (l2Fees || []).map((network: any) => {
-      const chainIdMap: Record<string, number> = {
-        'Arbitrum': 42161,
-        'Optimism': 10,
-        'Base': 8453,
-        'Polygon': 137,
-        'zkSync': 324,
-      }
-
-      const txFee = network.txFee || 0.1
-      
-      return {
-        chainId: chainIdMap[network.name] || 1,
-        chainName: network.name,
+    // L2 сети с дефолтными данными (так как L2Beat не даёт газ)
+    const l2Defaults: GasPrice[] = [
+      {
+        chainId: 42161,
+        chainName: 'Arbitrum',
         timestamp: Date.now(),
         prices: {
-          slow: {
-            maxPriorityFeePerGas: txFee * 0.8,
-            maxFeePerGas: txFee,
-            estimatedTime: '~3 min',
-          },
-          average: {
-            maxPriorityFeePerGas: txFee,
-            maxFeePerGas: txFee * 1.2,
-            estimatedTime: '~1 min',
-          },
-          fast: {
-            maxPriorityFeePerGas: txFee * 1.5,
-            maxFeePerGas: txFee * 2,
-            estimatedTime: '~30 sec',
-          },
+          slow: { maxPriorityFeePerGas: 0.01, maxFeePerGas: 0.08, estimatedTime: '~2 min' },
+          average: { maxPriorityFeePerGas: 0.02, maxFeePerGas: 0.12, estimatedTime: '~45 sec' },
+          fast: { maxPriorityFeePerGas: 0.05, maxFeePerGas: 0.18, estimatedTime: '~15 sec' },
         },
-        baseFee: txFee,
+        baseFee: 0.1,
         trend: 'stable' as const,
-      }
-    })
+      },
+      {
+        chainId: 10,
+        chainName: 'Optimism',
+        timestamp: Date.now(),
+        prices: {
+          slow: { maxPriorityFeePerGas: 0.01, maxFeePerGas: 0.04, estimatedTime: '~3 min' },
+          average: { maxPriorityFeePerGas: 0.02, maxFeePerGas: 0.06, estimatedTime: '~1 min' },
+          fast: { maxPriorityFeePerGas: 0.03, maxFeePerGas: 0.09, estimatedTime: '~20 sec' },
+        },
+        baseFee: 0.05,
+        trend: 'stable' as const,
+      },
+      {
+        chainId: 8453,
+        chainName: 'Base',
+        timestamp: Date.now(),
+        prices: {
+          slow: { maxPriorityFeePerGas: 0.01, maxFeePerGas: 0.06, estimatedTime: '~2 min' },
+          average: { maxPriorityFeePerGas: 0.02, maxFeePerGas: 0.09, estimatedTime: '~45 sec' },
+          fast: { maxPriorityFeePerGas: 0.04, maxFeePerGas: 0.12, estimatedTime: '~15 sec' },
+        },
+        baseFee: 0.08,
+        trend: 'stable' as const,
+      },
+      {
+        chainId: 137,
+        chainName: 'Polygon',
+        timestamp: Date.now(),
+        prices: {
+          slow: { maxPriorityFeePerGas: 25, maxFeePerGas: 28, estimatedTime: '~5 min' },
+          average: { maxPriorityFeePerGas: 35, maxFeePerGas: 42, estimatedTime: '~2 min' },
+          fast: { maxPriorityFeePerGas: 50, maxFeePerGas: 58, estimatedTime: '~30 sec' },
+        },
+        baseFee: 32,
+        trend: 'stable' as const,
+      },
+      {
+        chainId: 43114,
+        chainName: 'Avalanche',
+        timestamp: Date.now(),
+        prices: {
+          slow: { maxPriorityFeePerGas: 20, maxFeePerGas: 25, estimatedTime: '~3 min' },
+          average: { maxPriorityFeePerGas: 28, maxFeePerGas: 35, estimatedTime: '~1 min' },
+          fast: { maxPriorityFeePerGas: 40, maxFeePerGas: 50, estimatedTime: '~20 sec' },
+        },
+        baseFee: 27,
+        trend: 'stable' as const,
+      },
+      {
+        chainId: 250,
+        chainName: 'Fantom',
+        timestamp: Date.now(),
+        prices: {
+          slow: { maxPriorityFeePerGas: 15, maxFeePerGas: 18, estimatedTime: '~2 min' },
+          average: { maxPriorityFeePerGas: 20, maxFeePerGas: 25, estimatedTime: '~45 sec' },
+          fast: { maxPriorityFeePerGas: 30, maxFeePerGas: 38, estimatedTime: '~15 sec' },
+        },
+        baseFee: 22,
+        trend: 'stable' as const,
+      },
+    ]
 
     // Объединяем все данные
-    const gasData: GasPrice[] = [ethereumData, ...l2Data]
+    const gasData: GasPrice[] = [ethereumData, ...l2Defaults]
 
     // Генерируем AI предсказания
     const predictions: Record<number, AIPrediction> = {}

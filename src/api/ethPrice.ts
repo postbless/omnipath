@@ -4,7 +4,7 @@ let cacheTime: number = 0
 const CACHE_TTL = 60 * 1000 // 1 минута
 
 /**
- * Получение реальной цены ETH из Coingecko через прокси
+ * Получение реальной цены ETH через публичные API без CORS
  */
 export async function getETHPrice(): Promise<number> {
   // Проверяем кэш
@@ -12,33 +12,44 @@ export async function getETHPrice(): Promise<number> {
     return ethPriceCache
   }
 
-  try {
-    // Пробуем через прокси (CORS-anywhere)
-    const proxyUrl = 'https://api.allorigins.win/raw?url='
-    const targetUrl = encodeURIComponent(
-      'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
-    )
-    
-    const response = await fetch(proxyUrl + targetUrl, {
-      cache: 'no-store',
-    })
+  // Список API которые работают без CORS
+  const apis = [
+    // Binance public API (без CORS)
+    'https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT',
+    // Coinbase public API
+    'https://api.coinbase.com/v2/prices/ETH-USD/spot',
+  ]
 
-    if (!response.ok) {
-      throw new Error('Coingecko API error')
+  for (const url of apis) {
+    try {
+      const response = await fetch(url, { cache: 'no-store' })
+      if (!response.ok) continue
+
+      const data = await response.json()
+      
+      let price: number
+      if ('price' in data) {
+        price = parseFloat(data.price)
+      } else if ('data' in data && 'amount' in data.data) {
+        price = parseFloat(data.data.amount)
+      } else {
+        continue
+      }
+
+      if (price > 0) {
+        ethPriceCache = price
+        cacheTime = Date.now()
+        return price
+      }
+    } catch (error) {
+      console.warn(`Failed to fetch from ${url}:`, error)
+      continue
     }
-
-    const data = await response.json()
-    const price = data.ethereum?.usd || 2500
-
-    // Обновляем кэш
-    ethPriceCache = price
-    cacheTime = Date.now()
-
-    return price
-  } catch (error) {
-    console.warn('Failed to fetch ETH price, using cached:', ethPriceCache)
-    return ethPriceCache || 2500
   }
+
+  // Fallback к кэшу
+  console.warn('All APIs failed, using cached:', ethPriceCache)
+  return ethPriceCache || 2500
 }
 
 /**

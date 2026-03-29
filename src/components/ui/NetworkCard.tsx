@@ -68,7 +68,7 @@ export const NetworkCard: React.FC<NetworkCardProps> = ({
           <div className="text-right">
             <p className="text-lg font-bold text-white">{formatGasPrice(network.baseFee)}</p>
             <p className="text-xs text-orange-400 font-medium">
-              ${gweiToUSD(network.baseFee, ethPrice).toFixed(4)} USDT
+              ${gweiToUSD(network.baseFee, ethPrice).toFixed(6)} USDT
             </p>
             <div className={`flex items-center justify-center gap-1 text-xs ${
               trend === 'down' ? 'text-emerald-500' : trend === 'up' ? 'text-rose-500' : 'text-amber-500'
@@ -125,7 +125,7 @@ export const NetworkCard: React.FC<NetworkCardProps> = ({
           </div>
           <div className="flex items-center justify-end gap-2 text-xs">
             <span className="text-orange-400 font-medium">
-              ${gweiToUSD(network.baseFee, ethPrice).toFixed(4)} USDT
+              ${gweiToUSD(network.baseFee, ethPrice).toFixed(6)} USDT
             </span>
             <span className="text-zinc-600">|</span>
             <span className="text-zinc-500">{(network.baseFee * 1000000000).toFixed(0)} Gwei</span>

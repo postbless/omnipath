@@ -62,10 +62,15 @@ const GasTrackerCard: React.FC = () => {
           getETHPrice(),
         ])
 
+        console.log('[GasTracker] ETH Price:', ethPriceValue)
+        console.log('[GasTracker] Gas Response:', gasResponse)
+
         if (gasResponse.success && gasResponse.data.length > 0) {
           const ethGas = gasResponse.data.find(g => g.chainId === 1)
           if (ethGas) {
             setGasData(ethGas)
+            console.log('[GasTracker] ETH Gas:', ethGas.baseFee, 'Gwei')
+            console.log('[GasTracker] USD Price:', gweiToUSD(ethGas.baseFee, ethPriceValue))
           }
         }
         setEthPrice(ethPriceValue)

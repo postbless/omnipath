@@ -4,7 +4,7 @@ let cacheTime: number = 0
 const CACHE_TTL = 60 * 1000 // 1 минута
 
 /**
- * Получение реальной цены ETH из Coingecko
+ * Получение реальной цены ETH из Coingecko через прокси
  */
 export async function getETHPrice(): Promise<number> {
   // Проверяем кэш
@@ -13,10 +13,15 @@ export async function getETHPrice(): Promise<number> {
   }
 
   try {
-    const response = await fetch(
-      'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
-      { cache: 'no-store' }
+    // Пробуем через прокси (CORS-anywhere)
+    const proxyUrl = 'https://api.allorigins.win/raw?url='
+    const targetUrl = encodeURIComponent(
+      'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
     )
+    
+    const response = await fetch(proxyUrl + targetUrl, {
+      cache: 'no-store',
+    })
 
     if (!response.ok) {
       throw new Error('Coingecko API error')

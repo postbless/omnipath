@@ -10,8 +10,9 @@ async function getGasNow() {
     })
     if (!response.ok) throw new Error('GasNow failed')
     const data = await response.json()
+    // GasNow возвращает цену в Wei, конвертируем в Gwei (делим на 1e9)
     return {
-      rapid: data.data.rapid / 1e9, // конвертируем в Gwei
+      rapid: data.data.rapid / 1e9,
       fast: data.data.fast / 1e9,
       standard: data.data.standard / 1e9,
       slow: data.data.slow / 1e9,
@@ -31,8 +32,9 @@ async function getEthGasStation() {
     })
     if (!response.ok) throw new Error('EthGasStation failed')
     const data = await response.json()
+    // EthGasStation возвращает цену * 10, делим на 10 для Gwei
     return {
-      fast: data.fast / 10, // делим на 10 для Gwei
+      fast: data.fast / 10,
       fastest: data.fastest / 10,
       safeLow: data.safeLow / 10,
       average: data.average / 10,
@@ -90,6 +92,8 @@ async function getL2Fees() {
 
 export async function getGasPrices(): Promise<GasApiResponse> {
   try {
+    console.log('[Gas API] Fetching gas prices...')
+    
     // Пробуем получить данные из разных источников
     const [gasNow, ethGasStation, etherscan, l2Fees] = await Promise.all([
       getGasNow(),
@@ -97,6 +101,11 @@ export async function getGasPrices(): Promise<GasApiResponse> {
       getEtherscan(),
       getL2Fees(),
     ])
+
+    console.log('[Gas API] GasNow:', gasNow)
+    console.log('[Gas API] EthGasStation:', ethGasStation)
+    console.log('[Gas API] Etherscan:', etherscan)
+    console.log('[Gas API] L2Fees:', l2Fees)
 
     // Выбираем лучший источник для Ethereum
     let ethGasData = {

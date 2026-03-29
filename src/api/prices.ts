@@ -84,7 +84,11 @@ export async function getTokenPrices(
     url.searchParams.append('sparkline', 'false')
     url.searchParams.append('price_change_percentage', '24h')
 
-    const response = await fetch(url.toString(), {
+    // Используем прокси для обхода CORS
+    const proxyUrl = 'https://api.allorigins.win/raw?url='
+    const targetUrl = encodeURIComponent(url.toString())
+
+    const response = await fetch(proxyUrl + targetUrl, {
       cache: 'no-store',
       headers: {
         'Accept': 'application/json',

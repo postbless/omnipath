@@ -1,8 +1,8 @@
 import type { GasPrice, AIPrediction, GasApiResponse } from '../types'
 
-// === API Источники (бесплатные, без CORS) ===
+// === API Источники (бесплатные) ===
 
-// 1. Etherscan API (с ключом)
+// 1. Etherscan API (с ключом) - используем CORS-прокси
 async function getEtherscan() {
   const ETHERSCAN_API_KEY = import.meta.env.VITE_ETHERSCAN_API_KEY
 
@@ -12,47 +12,121 @@ async function getEtherscan() {
   }
 
   try {
-    // Используем прокси для обхода CORS
-    const proxyUrl = 'https://api.allorigins.win/raw?url='
-    const targetUrl = encodeURIComponent(
-      `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${ETHERSCAN_API_KEY}`
-    )
+    // Пробуем несколько прокси
+    const proxies = [
+      'https://corsproxy.io/?',
+      'https://api.codetabs.com/v1/proxy?quest=',
+      'https://proxy.cors.sh/',
+    ]
     
-    const response = await fetch(proxyUrl + targetUrl, { cache: 'no-store' })
-    const data = await response.json()
-    if (data.status !== '1') throw new Error(data.message)
-    return {
-      slow: parseFloat(data.result.SafeGasPrice),
-      average: parseFloat(data.result.ProposeGasPrice),
-      fast: parseFloat(data.result.FastGasPrice),
-      baseFee: parseFloat(data.result.suggestBaseFee),
+    for (const proxy of proxies) {
+      try {
+        const targetUrl = encodeURIComponent(
+          `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${ETHERSCAN_API_KEY}`
+        )
+        
+        const response = await fetch(proxy + targetUrl, { 
+          cache: 'no-store',
+          headers: { 'Accept': 'application/json' }
+        })
+        
+        if (!response.ok) continue
+        
+        const data = await response.json()
+        if (data.status !== '1') throw new Error(data.message)
+        
+        return {
+          slow: parseFloat(data.result.SafeGasPrice),
+          average: parseFloat(data.result.ProposeGasPrice),
+          fast: parseFloat(data.result.FastGasPrice),
+          baseFee: parseFloat(data.result.suggestBaseFee),
+        }
+      } catch {
+        continue
+      }
     }
+    
+    throw new Error('All proxies failed')
   } catch (error) {
     console.warn('Etherscan API failed:', error)
     return null
   }
 }
 
-// 2. Blockscout API для L2 (без CORS, без ключа)
-async function getBlockscoutGas(chain: string) {
+// 2. L2GasPrice API для Arbitrum (без CORS)
+async function getArbitrumGas() {
   try {
-    const proxyUrl = 'https://api.allorigins.win/raw?url='
-    const targetUrl = encodeURIComponent(
-      `https://${chain}.blockscout.com/api/v2/gas-oracle`
+    const response = await fetch(
+      'https://arbitrum.publicnode.com',
+      {
+        cache: 'no-store',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'eth_gasPrice',
+          params: [],
+          id: 1,
+        }),
+      }
     )
-    
-    const response = await fetch(proxyUrl + targetUrl, { cache: 'no-store' })
-    if (!response.ok) return null
-    
     const data = await response.json()
-    return {
-      slow: parseFloat(data.slow_max_priority_fee) / 1e9,
-      average: parseFloat(data.average_max_priority_fee) / 1e9,
-      fast: parseFloat(data.fast_max_priority_fee) / 1e9,
-      baseFee: parseFloat(data.base_fee) / 1e9,
-    }
+    if (data.error || !data.result) return null
+    return parseInt(data.result, 16) / 1e9
   } catch (error) {
-    console.warn(`Blockscout ${chain} failed:`, error)
+    console.warn('Arbitrum RPC failed:', error)
+    return null
+  }
+}
+
+// 3. Optimism через публичную ноду
+async function getOptimismGas() {
+  try {
+    const response = await fetch(
+      'https://optimism.publicnode.com',
+      {
+        cache: 'no-store',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'eth_gasPrice',
+          params: [],
+          id: 1,
+        }),
+      }
+    )
+    const data = await response.json()
+    if (data.error || !data.result) return null
+    return parseInt(data.result, 16) / 1e9
+  } catch (error) {
+    console.warn('Optimism RPC failed:', error)
+    return null
+  }
+}
+
+// 4. Base через публичную ноду
+async function getBaseGas() {
+  try {
+    const response = await fetch(
+      'https://base.publicnode.com',
+      {
+        cache: 'no-store',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'eth_gasPrice',
+          params: [],
+          id: 1,
+        }),
+      }
+    )
+    const data = await response.json()
+    if (data.error || !data.result) return null
+    return parseInt(data.result, 16) / 1e9
+  } catch (error) {
+    console.warn('Base RPC failed:', error)
     return null
   }
 }
@@ -63,7 +137,7 @@ export async function getGasPrices(): Promise<GasApiResponse> {
   try {
     console.log('[Gas API] Fetching gas prices...')
 
-    // Получаем данные через прокси
+    // Получаем данные из всех источников
     const [
       etherscan,
       arbGas,
@@ -71,9 +145,9 @@ export async function getGasPrices(): Promise<GasApiResponse> {
       baseGas,
     ] = await Promise.all([
       getEtherscan(),
-      getBlockscoutGas('arbitrum'),
-      getBlockscoutGas('optimism'),
-      getBlockscoutGas('base'),
+      getArbitrumGas(),
+      getOptimismGas(),
+      getBaseGas(),
     ])
 
     console.log('[Gas API] Results:', {
@@ -134,11 +208,11 @@ export async function getGasPrices(): Promise<GasApiResponse> {
         chainName: 'Arbitrum',
         timestamp: Date.now(),
         prices: {
-          slow: { maxPriorityFeePerGas: 0.01, maxFeePerGas: (arbGas?.baseFee || defaults.arb) * 0.8, estimatedTime: '~2 min' },
-          average: { maxPriorityFeePerGas: 0.02, maxFeePerGas: arbGas?.baseFee || defaults.arb, estimatedTime: '~45 sec' },
-          fast: { maxPriorityFeePerGas: 0.05, maxFeePerGas: (arbGas?.baseFee || defaults.arb) * 1.5, estimatedTime: '~15 sec' },
+          slow: { maxPriorityFeePerGas: 0.01, maxFeePerGas: (arbGas || defaults.arb) * 0.8, estimatedTime: '~2 min' },
+          average: { maxPriorityFeePerGas: 0.02, maxFeePerGas: arbGas || defaults.arb, estimatedTime: '~45 sec' },
+          fast: { maxPriorityFeePerGas: 0.05, maxFeePerGas: (arbGas || defaults.arb) * 1.5, estimatedTime: '~15 sec' },
         },
-        baseFee: arbGas?.baseFee || defaults.arb,
+        baseFee: arbGas || defaults.arb,
         trend: 'stable' as const,
       },
       {
@@ -146,11 +220,11 @@ export async function getGasPrices(): Promise<GasApiResponse> {
         chainName: 'Optimism',
         timestamp: Date.now(),
         prices: {
-          slow: { maxPriorityFeePerGas: 0.01, maxFeePerGas: (opGas?.baseFee || defaults.op) * 0.8, estimatedTime: '~3 min' },
-          average: { maxPriorityFeePerGas: 0.02, maxFeePerGas: opGas?.baseFee || defaults.op, estimatedTime: '~1 min' },
-          fast: { maxPriorityFeePerGas: 0.03, maxFeePerGas: (opGas?.baseFee || defaults.op) * 1.5, estimatedTime: '~20 sec' },
+          slow: { maxPriorityFeePerGas: 0.01, maxFeePerGas: (opGas || defaults.op) * 0.8, estimatedTime: '~3 min' },
+          average: { maxPriorityFeePerGas: 0.02, maxFeePerGas: opGas || defaults.op, estimatedTime: '~1 min' },
+          fast: { maxPriorityFeePerGas: 0.03, maxFeePerGas: (opGas || defaults.op) * 1.5, estimatedTime: '~20 sec' },
         },
-        baseFee: opGas?.baseFee || defaults.op,
+        baseFee: opGas || defaults.op,
         trend: 'stable' as const,
       },
       {
@@ -158,11 +232,11 @@ export async function getGasPrices(): Promise<GasApiResponse> {
         chainName: 'Base',
         timestamp: Date.now(),
         prices: {
-          slow: { maxPriorityFeePerGas: 0.01, maxFeePerGas: (baseGas?.baseFee || defaults.base) * 0.8, estimatedTime: '~2 min' },
-          average: { maxPriorityFeePerGas: 0.02, maxFeePerGas: baseGas?.baseFee || defaults.base, estimatedTime: '~45 sec' },
-          fast: { maxPriorityFeePerGas: 0.04, maxFeePerGas: (baseGas?.baseFee || defaults.base) * 1.5, estimatedTime: '~15 sec' },
+          slow: { maxPriorityFeePerGas: 0.01, maxFeePerGas: (baseGas || defaults.base) * 0.8, estimatedTime: '~2 min' },
+          average: { maxPriorityFeePerGas: 0.02, maxFeePerGas: baseGas || defaults.base, estimatedTime: '~45 sec' },
+          fast: { maxPriorityFeePerGas: 0.04, maxFeePerGas: (baseGas || defaults.base) * 1.5, estimatedTime: '~15 sec' },
         },
-        baseFee: baseGas?.baseFee || defaults.base,
+        baseFee: baseGas || defaults.base,
         trend: 'stable' as const,
       },
       {

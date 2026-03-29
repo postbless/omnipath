@@ -6,49 +6,21 @@ interface CryptoIconProps {
   size?: number
 }
 
-// Официальные логотипы из CDN (лицензионные)
+// CoinGecko CDN - стабильные логотипы
 const ICON_URLS: Record<string, string> = {
-  // Ethereum - официальный логотип
-  ethereum: 'https://cdn.jsdelivr.net/gh/ethereum/ethereum-brand-kit@master/logos/ETH-logo-icon.svg',
-  
-  // Arbitrum - официальный логотип
-  arbitrum: 'https://cdn.arbitrum.io/logo-arbitrum.svg',
-  
-  // Optimism - официальный логотип
-  optimism: 'https://community.optimism.io/images/optimism-token.svg',
-  
-  // Base - официальный логотип (Coinbase)
-  base: 'https://assets.base.org/base-token-logo.svg',
-  
-  // Polygon - официальный логотип
-  polygon: 'https://cdn.prod.website-files.com/62c3325a9e6dcb3cb7b5c7b6/64045edd13d13d106981d850_polygon.svg',
-  
-  // BSC - официальный логотип
-  bsc: 'https://assets.binance.org/bnb-chain.svg',
-  
-  // Solana - официальный логотип
-  solana: 'https://cdn.jsdelivr.net/gh/solana-labs/solana@master/docs/src/images/solana-logo.svg',
-  
-  // zkSync - официальный логотип
-  zksync: 'https://assets.zksync.io/logos/zksync-logo.svg',
-  
-  // Avalanche - официальный логотип
-  avalanche: 'https://assets.avax.network/logos/AVAX-logo.svg',
-  
-  // Fantom - официальный логотип
-  fantom: 'https://assets.fantom.network/logos/fantom-logo.svg',
-  
-  // Cosmos - официальный логотип
-  cosmos: 'https://assets.cosmos.network/logos/cosmos-hub.svg',
-  
-  // Gnosis - официальный логотип
-  gnosis: 'https://assets.gnosischain.com/logos/gnosis-logo.svg',
-  
-  // Linea - официальный логотип (ConsenSys)
-  lineal: 'https://assets.linea.build/logos/linea-logo.svg',
-  
-  // Mantle - официальный логотип
-  mantle: 'https://assets.mantle.xyz/logos/mantle-logo.svg',
+  ethereum: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png?1595348880',
+  arbitrum: 'https://assets.coingecko.com/coins/images/16547/small/photo_2023-03-29_21.47.00.jpeg?1679894664',
+  optimism: 'https://assets.coingecko.com/coins/images/25244/small/Optimism.png?1699965625',
+  base: 'https://assets.coingecko.com/coins/images/30914/small/base.png?1688366316',
+  polygon: 'https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png?1624446912',
+  bsc: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png?1644970852',
+  solana: 'https://assets.coingecko.com/coins/images/4128/small/solana.png?1718769756',
+  zksync: 'https://assets.coingecko.com/coins/images/302/small/zksync_logo.png?1669039557',
+  avalanche: 'https://assets.coingecko.com/coins/images/12559/small/coin-round-red.png?1604021818',
+  fantom: 'https://assets.coingecko.com/coins/images/4001/small/Fantom.png?1669657657',
+  cosmos: 'https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png?1655136416',
+  gnosis: 'https://assets.coingecko.com/coins/images/662/small/logo_square_simple_300px.png?1609231689',
+  tron: 'https://assets.coingecko.com/coins/images/1094/small/tron-logo.png?1547035066',
 }
 
 // Fallback SVG для каждой сети

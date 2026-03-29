@@ -57,7 +57,7 @@ function getCachedPrices(): TokenPrice[] {
   ]
 }
 
-// Основная функция получения цен через Binance API (без CORS)
+// Основная функция получения цен через Binance API + CORS прокси
 export async function getTokenPrices(
   ids: string[] = [
     'ethereum',
@@ -73,7 +73,7 @@ export async function getTokenPrices(
   ]
 ): Promise<TokenPrice[]> {
   try {
-    // Binance public API (работает без CORS)
+    // Binance public API через CORS прокси
     const binanceIds: Record<string, string> = {
       'ethereum': 'ETHUSDT',
       'bitcoin': 'BTCUSDT',
@@ -95,10 +95,18 @@ export async function getTokenPrices(
       return getCachedPrices()
     }
 
-    const response = await fetch(
-      `https://api.binance.com/api/v3/ticker/24hr?symbols=${JSON.stringify(symbols)}`,
-      { cache: 'no-store' }
+    // Используем CORS прокси
+    const proxyUrl = 'https://corsproxy.io/?'
+    const targetUrl = encodeURIComponent(
+      `https://api.binance.com/api/v3/ticker/24hr?symbols=${JSON.stringify(symbols)}`
     )
+
+    const response = await fetch(proxyUrl + targetUrl, {
+      cache: 'no-store',
+      headers: {
+        'Accept': 'application/json',
+      },
+    })
 
     if (!response.ok) {
       throw new Error(`Binance API error: ${response.status}`)

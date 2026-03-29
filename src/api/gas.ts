@@ -2,58 +2,7 @@ import type { GasPrice, AIPrediction, GasApiResponse } from '../types'
 
 // === API Источники (бесплатные) ===
 
-// 1. Etherscan API (с ключом) - используем CORS-прокси
-async function getEtherscan() {
-  const ETHERSCAN_API_KEY = import.meta.env.VITE_ETHERSCAN_API_KEY
-
-  if (!ETHERSCAN_API_KEY) {
-    console.warn('No Etherscan API key')
-    return null
-  }
-
-  try {
-    // Пробуем несколько прокси
-    const proxies = [
-      'https://corsproxy.io/?',
-      'https://api.codetabs.com/v1/proxy?quest=',
-      'https://proxy.cors.sh/',
-    ]
-    
-    for (const proxy of proxies) {
-      try {
-        const targetUrl = encodeURIComponent(
-          `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${ETHERSCAN_API_KEY}`
-        )
-        
-        const response = await fetch(proxy + targetUrl, { 
-          cache: 'no-store',
-          headers: { 'Accept': 'application/json' }
-        })
-        
-        if (!response.ok) continue
-        
-        const data = await response.json()
-        if (data.status !== '1') throw new Error(data.message)
-        
-        return {
-          slow: parseFloat(data.result.SafeGasPrice),
-          average: parseFloat(data.result.ProposeGasPrice),
-          fast: parseFloat(data.result.FastGasPrice),
-          baseFee: parseFloat(data.result.suggestBaseFee),
-        }
-      } catch {
-        continue
-      }
-    }
-    
-    throw new Error('All proxies failed')
-  } catch (error) {
-    console.warn('Etherscan API failed:', error)
-    return null
-  }
-}
-
-// 2. L2GasPrice API для Arbitrum (без CORS)
+// 1. Arbitrum через публичную ноду (работает без CORS)
 async function getArbitrumGas() {
   try {
     const response = await fetch(
@@ -79,7 +28,7 @@ async function getArbitrumGas() {
   }
 }
 
-// 3. Optimism через публичную ноду
+// 2. Optimism через публичную ноду
 async function getOptimismGas() {
   try {
     const response = await fetch(
@@ -105,7 +54,7 @@ async function getOptimismGas() {
   }
 }
 
-// 4. Base через публичную ноду
+// 3. Base через публичную ноду
 async function getBaseGas() {
   try {
     const response = await fetch(
@@ -137,27 +86,20 @@ export async function getGasPrices(): Promise<GasApiResponse> {
   try {
     console.log('[Gas API] Fetching gas prices...')
 
-    // Получаем данные из всех источников
-    const [
-      etherscan,
-      arbGas,
-      opGas,
-      baseGas,
-    ] = await Promise.all([
-      getEtherscan(),
+    // Получаем данные из L2 источников
+    const [arbGas, opGas, baseGas] = await Promise.all([
       getArbitrumGas(),
       getOptimismGas(),
       getBaseGas(),
     ])
 
     console.log('[Gas API] Results:', {
-      etherscan,
       arbitrum: arbGas,
       optimism: opGas,
       base: baseGas,
     })
 
-    // Дефолтные значения
+    // Дефолтные значения для всех сетей
     const defaults = {
       eth: { slow: 20, average: 25, fast: 30, baseFee: 24 },
       arb: 0.1,
@@ -168,8 +110,8 @@ export async function getGasPrices(): Promise<GasApiResponse> {
       ftm: 22,
     }
 
-    // Ethereum
-    const ethData = etherscan || defaults.eth
+    // Ethereum (дефолтные значения)
+    const ethData = defaults.eth
     const getTrend = (price: number): 'up' | 'down' | 'stable' => {
       if (price < 20) return 'down'
       if (price > 50) return 'up'

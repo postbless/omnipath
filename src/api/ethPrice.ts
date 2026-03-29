@@ -46,7 +46,9 @@ export async function getETHPrice(): Promise<number> {
 export function gweiToUSD(gwei: number, ethPrice?: number): number {
   const price = ethPrice || ethPriceCache
   // 1 Gwei = 0.000000001 ETH
-  return gwei * 0.000000001 * price
+  const result = gwei * 0.000000001 * price
+  console.log(`[gweiToUSD] ${gwei} Gwei * ${price} USD = ${result} USD`)
+  return result
 }
 
 /**

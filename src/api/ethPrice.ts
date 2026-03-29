@@ -4,7 +4,7 @@ let cacheTime: number = 0
 const CACHE_TTL = 60 * 1000 // 1 минута
 
 /**
- * Получение реальной цены ETH через публичные API
+ * Получение реальной цены ETH через CoinGecko API (поддерживает CORS)
  */
 export async function getETHPrice(): Promise<number> {
   // Проверяем кэш
@@ -13,20 +13,20 @@ export async function getETHPrice(): Promise<number> {
   }
 
   try {
-    // Используем CORS прокси для Binance API
-    const proxyUrl = 'https://corsproxy.io/?'
-    const targetUrl = encodeURIComponent('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT')
-    
-    const response = await fetch(proxyUrl + targetUrl, { cache: 'no-store' })
+    // CoinGecko поддерживает CORS из браузера
+    const response = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
+      { cache: 'no-store' }
+    )
     
     if (!response.ok) {
-      throw new Error('Binance API error')
+      throw new Error('CoinGecko API error')
     }
 
     const data = await response.json()
-    const price = parseFloat(data.price)
+    const price = data.ethereum?.usd
 
-    if (price > 0) {
+    if (price && price > 0) {
       ethPriceCache = price
       cacheTime = Date.now()
       return price

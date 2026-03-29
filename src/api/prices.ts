@@ -57,7 +57,7 @@ function getCachedPrices(): TokenPrice[] {
   ]
 }
 
-// Основная функция получения цен через Binance API + CORS прокси
+// Основная функция получения цен через CoinGecko API (поддерживает CORS)
 export async function getTokenPrices(
   ids: string[] = [
     'ethereum',
@@ -73,35 +73,17 @@ export async function getTokenPrices(
   ]
 ): Promise<TokenPrice[]> {
   try {
-    // Binance public API через CORS прокси
-    const binanceIds: Record<string, string> = {
-      'ethereum': 'ETHUSDT',
-      'bitcoin': 'BTCUSDT',
-      'polygon': 'MATICUSDT',
-      'arbitrum': 'ARBUSDT',
-      'optimism': 'OPUSDT',
-      'avalanche-2': 'AVAXUSDT',
-      'fantom': 'FTMUSDT',
-      'cosmos': 'ATOMUSDT',
-      'bnb': 'BNBUSDT',
-      'solana': 'SOLUSDT',
-    }
+    // CoinGecko поддерживает CORS из браузера
+    const url = new URL('https://api.coingecko.com/api/v3/coins/markets')
+    url.searchParams.append('vs_currency', 'usd')
+    url.searchParams.append('ids', ids.join(','))
+    url.searchParams.append('order', 'market_cap_desc')
+    url.searchParams.append('per_page', '100')
+    url.searchParams.append('page', '1')
+    url.searchParams.append('sparkline', 'false')
+    url.searchParams.append('price_change_percentage', '24h')
 
-    const symbols = ids
-      .map(id => binanceIds[id])
-      .filter(Boolean)
-
-    if (symbols.length === 0) {
-      return getCachedPrices()
-    }
-
-    // Используем CORS прокси
-    const proxyUrl = 'https://corsproxy.io/?'
-    const targetUrl = encodeURIComponent(
-      `https://api.binance.com/api/v3/ticker/24hr?symbols=${JSON.stringify(symbols)}`
-    )
-
-    const response = await fetch(proxyUrl + targetUrl, {
+    const response = await fetch(url.toString(), {
       cache: 'no-store',
       headers: {
         'Accept': 'application/json',
@@ -109,22 +91,26 @@ export async function getTokenPrices(
     })
 
     if (!response.ok) {
-      throw new Error(`Binance API error: ${response.status}`)
+      if (response.status === 429) {
+        console.warn('Coingecko rate limit, using cached data')
+        return getCachedPrices()
+      }
+      throw new Error(`Coingecko API error: ${response.status}`)
     }
 
     const data = await response.json()
     
     // Конвертируем в наш формат
     const prices: TokenPrice[] = data.map((item: any) => ({
-      id: Object.keys(binanceIds).find(key => binanceIds[key] === item.symbol) || item.symbol,
-      symbol: item.symbol.replace('USDT', '').toLowerCase(),
-      name: item.symbol.replace('USDT', ''),
-      current_price: parseFloat(item.lastPrice),
-      price_change_percentage_24h: parseFloat(item.priceChangePercent),
-      market_cap: 0,
-      total_volume: parseFloat(item.volume),
-      high_24h: parseFloat(item.highPrice),
-      low_24h: parseFloat(item.lowPrice),
+      id: item.id,
+      symbol: item.symbol,
+      name: item.name,
+      current_price: item.current_price,
+      price_change_percentage_24h: item.price_change_percentage_24h,
+      market_cap: item.market_cap,
+      total_volume: item.total_volume,
+      high_24h: item.high_24h,
+      low_24h: item.low_24h,
     }))
 
     cachePrices(prices)

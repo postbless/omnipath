@@ -4,7 +4,7 @@ let tronCacheTime = 0
 const TRON_CACHE_TTL = 60 * 1000 // 1 минута
 
 /**
- * Получение реальных данных о газе Tron из API
+ * Получение данных о газе Tron (дефолтные значения - API не поддерживает CORS)
  */
 export async function getTronGasData(): Promise<{
   energyPrice: number  // в Sun
@@ -15,56 +15,22 @@ export async function getTronGasData(): Promise<{
   if (tronCache && Date.now() - tronCacheTime < TRON_CACHE_TTL) {
     return {
       ...tronCache,
-      energyFeeInTRX: tronCache.energyPrice * 420, // примерное значение
+      energyFeeInTRX: tronCache.energyPrice * 420,
     }
   }
 
-  try {
-    // TronGrid API - получаем параметры сети
-    const [energyResponse, bandwidthResponse] = await Promise.all([
-      fetch('https://api.trongrid.io/wallet/getchainparameters', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      }).catch(() => null),
-      fetch('https://api.trongrid.io/wallet/getnetworkinfo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      }).catch(() => null),
-    ])
+  // Используем дефолтные значения (TronGrid API не поддерживает CORS из браузера)
+  const energyPrice = 420
+  const bandwidthPrice = 1000
 
-    let energyPrice = 420 // дефолт в Sun
-    let bandwidthPrice = 1000 // дефолт в Sun
+  // Кэшируем
+  tronCache = { energyPrice, bandwidthPrice }
+  tronCacheTime = Date.now()
 
-    if (energyResponse?.ok) {
-      const data = await energyResponse.json()
-      // energy_fee в Sun
-      energyPrice = data.energy_fee || 420
-    }
-
-    if (bandwidthResponse?.ok) {
-      const data = await bandwidthResponse.json()
-      // bandwidth_price в Sun
-      bandwidthPrice = data.bandwidth_price || 1000
-    }
-
-    // Кэшируем
-    tronCache = { energyPrice, bandwidthPrice }
-    tronCacheTime = Date.now()
-
-    return {
-      energyPrice,
-      bandwidthPrice,
-      energyFeeInTRX: energyPrice * 420 / 1_000_000, // конвертируем в TRX
-    }
-  } catch (error) {
-    console.warn('Failed to fetch Tron gas data:', error)
-    return {
-      energyPrice: 420,
-      bandwidthPrice: 1000,
-      energyFeeInTRX: 0.176,
-    }
+  return {
+    energyPrice,
+    bandwidthPrice,
+    energyFeeInTRX: energyPrice * 420 / 1_000_000,
   }
 }
 

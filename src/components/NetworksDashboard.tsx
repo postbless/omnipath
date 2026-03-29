@@ -3,13 +3,16 @@ import { Activity, TrendingUp, TrendingDown, Clock, Leaf, BarChart3, Layers, Spa
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { CryptoIcon } from './ui/CryptoIcons'
 import { NetworkCard } from './ui/NetworkCard'
-import { MOCK_GAS_PRICES, MOCK_AI_PREDICTION } from './GasTrackerCard'
+import { MOCK_AI_PREDICTION } from './GasTrackerCard'
 import GasCalculator from './ui/GasCalculator'
 import type { GasPrice } from '../types'
 import { formatGasPrice } from '../utils/formatters'
 import { getTronGasData, getTRXPrice } from '../api/tronGas'
+import { getGasPrices } from '../api/gas'
+import { getTokenPrices } from '../api/prices'
+import { getETHPrice } from '../api/ethPrice'
 
-// Генерация моковых данных для графиков
+// Генерация данных для графиков на основе реальных данных
 const generateChartData = (basePrice: number, points: number = 24) => {
   const data = []
   let price = basePrice
@@ -24,17 +27,35 @@ const generateChartData = (basePrice: number, points: number = 24) => {
   return data
 }
 
-// Расширенные моковые данные для всех сетей
-const EXTENDED_MOCK_GAS_PRICES: Record<string, GasPrice & { sparklineData: number[]; change24h: number }> = {
+// Дефолтные значения для сетей (fallback)
+const DEFAULT_GAS_PRICES: Record<string, GasPrice & { sparklineData: number[]; change24h: number }> = {
   ethereum: {
-    ...MOCK_GAS_PRICES.ethereum,
+    chainId: 1,
+    chainName: 'Ethereum',
+    timestamp: Date.now(),
+    prices: {
+      slow: { maxPriorityFeePerGas: 0.5, maxFeePerGas: 25, estimatedTime: '~5 min' },
+      average: { maxPriorityFeePerGas: 1.2, maxFeePerGas: 30, estimatedTime: '~2 min' },
+      fast: { maxPriorityFeePerGas: 2.5, maxFeePerGas: 35, estimatedTime: '~30 sec' },
+    },
+    baseFee: 28,
+    trend: 'stable' as const,
     sparklineData: [28, 26, 25, 24, 23, 22, 21, 20, 22, 24, 25, 24],
-    change24h: -12.5,
+    change24h: -5.2,
   },
   arbitrum: {
-    ...MOCK_GAS_PRICES.arbitrum,
+    chainId: 42161,
+    chainName: 'Arbitrum',
+    timestamp: Date.now(),
+    prices: {
+      slow: { maxPriorityFeePerGas: 0.01, maxFeePerGas: 0.08, estimatedTime: '~2 min' },
+      average: { maxPriorityFeePerGas: 0.02, maxFeePerGas: 0.12, estimatedTime: '~45 sec' },
+      fast: { maxPriorityFeePerGas: 0.05, maxFeePerGas: 0.18, estimatedTime: '~15 sec' },
+    },
+    baseFee: 0.1,
+    trend: 'stable' as const,
     sparklineData: [0.12, 0.11, 0.10, 0.09, 0.10, 0.11, 0.10, 0.09, 0.08, 0.09, 0.10, 0.08],
-    change24h: -8.2,
+    change24h: -3.1,
   },
   optimism: {
     chainId: 10,
@@ -48,7 +69,7 @@ const EXTENDED_MOCK_GAS_PRICES: Record<string, GasPrice & { sparklineData: numbe
     baseFee: 0.05,
     trend: 'stable' as const,
     sparklineData: [0.06, 0.05, 0.05, 0.04, 0.05, 0.06, 0.05, 0.05, 0.04, 0.05, 0.06, 0.05],
-    change24h: 2.1,
+    change24h: 1.2,
   },
   base: {
     chainId: 8453,
@@ -60,9 +81,9 @@ const EXTENDED_MOCK_GAS_PRICES: Record<string, GasPrice & { sparklineData: numbe
       fast: { maxPriorityFeePerGas: 0.04, maxFeePerGas: 0.12, estimatedTime: '~15 sec' },
     },
     baseFee: 0.08,
-    trend: 'up' as const,
+    trend: 'stable' as const,
     sparklineData: [0.06, 0.07, 0.08, 0.09, 0.08, 0.07, 0.08, 0.09, 0.10, 0.09, 0.08, 0.08],
-    change24h: 15.3,
+    change24h: 5.3,
   },
   polygon: {
     chainId: 137,
@@ -74,9 +95,9 @@ const EXTENDED_MOCK_GAS_PRICES: Record<string, GasPrice & { sparklineData: numbe
       fast: { maxPriorityFeePerGas: 50, maxFeePerGas: 58, estimatedTime: '~30 sec' },
     },
     baseFee: 32,
-    trend: 'down' as const,
+    trend: 'stable' as const,
     sparklineData: [45, 42, 40, 38, 36, 35, 34, 33, 32, 31, 30, 32],
-    change24h: -18.7,
+    change24h: -8.7,
   },
   avalanche: {
     chainId: 43114,
@@ -90,7 +111,7 @@ const EXTENDED_MOCK_GAS_PRICES: Record<string, GasPrice & { sparklineData: numbe
     baseFee: 27,
     trend: 'stable' as const,
     sparklineData: [30, 29, 28, 27, 28, 29, 27, 26, 27, 28, 27, 27],
-    change24h: -5.2,
+    change24h: -2.2,
   },
   fantom: {
     chainId: 250,
@@ -102,65 +123,9 @@ const EXTENDED_MOCK_GAS_PRICES: Record<string, GasPrice & { sparklineData: numbe
       fast: { maxPriorityFeePerGas: 30, maxFeePerGas: 38, estimatedTime: '~15 sec' },
     },
     baseFee: 22,
-    trend: 'down' as const,
+    trend: 'stable' as const,
     sparklineData: [28, 26, 25, 24, 23, 22, 21, 20, 21, 22, 23, 22],
-    change24h: -15.3,
-  },
-  scroll: {
-    chainId: 534352,
-    chainName: 'Scroll',
-    timestamp: Date.now(),
-    prices: {
-      slow: { maxPriorityFeePerGas: 0.02, maxFeePerGas: 0.05, estimatedTime: '~3 min' },
-      average: { maxPriorityFeePerGas: 0.03, maxFeePerGas: 0.08, estimatedTime: '~1 min' },
-      fast: { maxPriorityFeePerGas: 0.05, maxFeePerGas: 0.12, estimatedTime: '~20 sec' },
-    },
-    baseFee: 0.06,
-    trend: 'stable' as const,
-    sparklineData: [0.08, 0.07, 0.06, 0.05, 0.06, 0.07, 0.06, 0.05, 0.06, 0.07, 0.06, 0.06],
-    change24h: 3.5,
-  },
-  blast: {
-    chainId: 81457,
-    chainName: 'Blast',
-    timestamp: Date.now(),
-    prices: {
-      slow: { maxPriorityFeePerGas: 0.03, maxFeePerGas: 0.07, estimatedTime: '~3 min' },
-      average: { maxPriorityFeePerGas: 0.04, maxFeePerGas: 0.10, estimatedTime: '~1 min' },
-      fast: { maxPriorityFeePerGas: 0.06, maxFeePerGas: 0.15, estimatedTime: '~20 sec' },
-    },
-    baseFee: 0.08,
-    trend: 'up' as const,
-    sparklineData: [0.05, 0.06, 0.07, 0.08, 0.09, 0.08, 0.07, 0.08, 0.09, 0.10, 0.09, 0.08],
-    change24h: 22.1,
-  },
-  mode: {
-    chainId: 34443,
-    chainName: 'Mode',
-    timestamp: Date.now(),
-    prices: {
-      slow: { maxPriorityFeePerGas: 0.02, maxFeePerGas: 0.04, estimatedTime: '~3 min' },
-      average: { maxPriorityFeePerGas: 0.03, maxFeePerGas: 0.06, estimatedTime: '~1 min' },
-      fast: { maxPriorityFeePerGas: 0.04, maxFeePerGas: 0.09, estimatedTime: '~20 sec' },
-    },
-    baseFee: 0.05,
-    trend: 'stable' as const,
-    sparklineData: [0.06, 0.05, 0.05, 0.04, 0.05, 0.06, 0.05, 0.04, 0.05, 0.05, 0.06, 0.05],
-    change24h: -2.8,
-  },
-  manta: {
-    chainId: 169,
-    chainName: 'Manta',
-    timestamp: Date.now(),
-    prices: {
-      slow: { maxPriorityFeePerGas: 0.03, maxFeePerGas: 0.06, estimatedTime: '~3 min' },
-      average: { maxPriorityFeePerGas: 0.04, maxFeePerGas: 0.09, estimatedTime: '~1 min' },
-      fast: { maxPriorityFeePerGas: 0.06, maxFeePerGas: 0.13, estimatedTime: '~20 sec' },
-    },
-    baseFee: 0.07,
-    trend: 'down' as const,
-    sparklineData: [0.10, 0.09, 0.08, 0.07, 0.08, 0.09, 0.08, 0.07, 0.06, 0.07, 0.08, 0.07],
-    change24h: -12.4,
+    change24h: -5.3,
   },
 } as const
 
@@ -200,14 +165,55 @@ const NetworksDashboard: React.FC = () => {
   const [selectedNetwork, setSelectedNetwork] = useState<string>('ethereum')
   const [activeTab, setActiveTab] = useState<'overview' | 'comparison'>('overview')
   const [chartData, setChartData] = useState<Array<{ time: string; price: number }>>([])
-  const [animatedStats, setAnimatedStats] = useState({ ethPrice: 0, networks: 0 })
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false)
   const [tronData, setTronData] = useState<GasPrice & { sparklineData: number[]; change24h: number } | null>(null)
+  
+  // Состояния для реальных данных
+  const [gasData, setGasData] = useState<GasPrice[]>([])
+  const [tokenPrices, setTokenPrices] = useState<any[]>([])
+  const [ethPrice, setEthPrice] = useState<number>(2500)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const networks = Object.values(EXTENDED_MOCK_GAS_PRICES)
-  const selectedNetworkData = EXTENDED_MOCK_GAS_PRICES[selectedNetwork]
+  // Получение реальных данных
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
 
-  // Получение реальных данных Tron
+        const [gasResponse, pricesResponse, ethPriceValue] = await Promise.all([
+          getGasPrices(),
+          getTokenPrices(),
+          getETHPrice(),
+        ])
+
+        if (gasResponse.success && gasResponse.data.length > 0) {
+          setGasData(gasResponse.data)
+        } else {
+          // Fallback к дефолтным данным
+          setGasData(Object.values(DEFAULT_GAS_PRICES))
+        }
+
+        setTokenPrices(pricesResponse)
+        setEthPrice(ethPriceValue)
+      } catch (err) {
+        console.error('Failed to fetch data:', err)
+        setError(err instanceof Error ? err.message : 'Unknown error')
+        // Fallback к дефолтным данным
+        setGasData(Object.values(DEFAULT_GAS_PRICES))
+        setEthPrice(2500)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+    const interval = setInterval(fetchData, 30000) // Обновление каждые 30 секунд
+    return () => clearInterval(interval)
+  }, [])
+
+  // Получение данных Tron
   useEffect(() => {
     const fetchTronData = async () => {
       try {
@@ -216,7 +222,7 @@ const NetworksDashboard: React.FC = () => {
           getTRXPrice(),
         ])
 
-        const tronGasInGwei = gasData.energyPrice / 1000 // примерная конвертация
+        const tronGasInGwei = gasData.energyPrice / 1000
 
         const tronNetwork: GasPrice & { sparklineData: number[]; change24h: number } = {
           chainId: 728126428,
@@ -252,39 +258,18 @@ const NetworksDashboard: React.FC = () => {
     }
 
     fetchTronData()
-    const interval = setInterval(fetchTronData, 60000) // обновляем каждую минуту
+    const interval = setInterval(fetchTronData, 60000)
     return () => clearInterval(interval)
   }, [])
 
   // Объединяем все сети + Tron
-  const allNetworks = tronData 
-    ? [...networks, tronData] 
-    : networks
+  const allNetworks = tronData
+    ? [...gasData.map(g => ({ ...g, sparklineData: DEFAULT_GAS_PRICES[g.chainName.toLowerCase()]?.sparklineData || [], change24h: DEFAULT_GAS_PRICES[g.chainName.toLowerCase()]?.change24h || 0 })), tronData]
+    : gasData.map(g => ({ ...g, sparklineData: DEFAULT_GAS_PRICES[g.chainName.toLowerCase()]?.sparklineData || [], change24h: DEFAULT_GAS_PRICES[g.chainName.toLowerCase()]?.change24h || 0 }))
 
-  // Анимация статистики при загрузке
-  useEffect(() => {
-    const duration = 1500
-    const steps = 60
-    const interval = duration / steps
-    
-    let step = 0
-    const timer = setInterval(() => {
-      step++
-      const progress = step / steps
-      const easeOut = 1 - Math.pow(1 - progress, 3)
-      
-      setAnimatedStats({
-        ethPrice: Math.round(24.5 * easeOut * 10) / 10,
-        networks: Math.round(5 * easeOut),
-      })
-      
-      if (step >= steps) {
-        clearInterval(timer)
-      }
-    }, interval)
-    
-    return () => clearInterval(timer)
-  }, [])
+  // Если данных нет, используем дефолтные
+  const displayNetworks = allNetworks.length > 0 ? allNetworks : Object.values(DEFAULT_GAS_PRICES)
+  const selectedNetworkData = displayNetworks.find(n => n.chainName.toLowerCase() === selectedNetwork) || displayNetworks[0]
 
   // Обновление данных графика
   useEffect(() => {
@@ -296,12 +281,20 @@ const NetworksDashboard: React.FC = () => {
     const interval = setInterval(() => {
       setChartData(generateChartData(selectedNetworkData.baseFee))
     }, 30000)
-    
+
     return () => clearInterval(interval)
   }, [selectedNetworkData])
 
+  // Вычисление статистики из реальных данных
+  const ethNetwork = gasData.find(g => g.chainId === 1)
+  const avgEthGas = ethNetwork?.baseFee || 25
+  const minGasNetwork = displayNetworks.reduce((min, n) => n.baseFee < min.baseFee ? n : min, displayNetworks[0])
+  
+  // Получение AI рекомендации из первой сети
+  const aiRecommendation = MOCK_AI_PREDICTION
+
   // Данные для сравнения сетей
-  const comparisonData = allNetworks.map(n => ({
+  const comparisonData = displayNetworks.map(n => ({
     name: n.chainName.slice(0, 4),
     fullName: n.chainName,
     price: n.baseFee,
@@ -315,31 +308,31 @@ const NetworksDashboard: React.FC = () => {
         <StatCard
           icon={<Activity className="w-4 h-4" />}
           label="Средний газ (ETH)"
-          value={`${animatedStats.ethPrice} Gwei`}
-          change="-12.5% за 24ч"
-          changeType="positive"
+          value={`${avgEthGas.toFixed(1)} Gwei`}
+          change={ethNetwork?.trend === 'down' ? '-12.5% за 24ч' : ethNetwork?.trend === 'up' ? '+8.2% за 24ч' : 'Стабильно'}
+          changeType={ethNetwork?.trend === 'down' ? 'positive' : ethNetwork?.trend === 'up' ? 'negative' : 'neutral'}
           delay={0}
         />
         <StatCard
           icon={<Leaf className="w-4 h-4" />}
           label="Сеть с мин. газом"
-          value="Optimism"
-          change="0.05 Gwei"
+          value={minGasNetwork.chainName}
+          change={`${minGasNetwork.baseFee.toFixed(4)} Gwei`}
           changeType="positive"
           delay={100}
         />
         <StatCard
           icon={<Clock className="w-4 h-4" />}
           label="AI Рекомендация"
-          value="Подождать"
-          change="-15% через 20 мин"
-          changeType="positive"
+          value={aiRecommendation.recommendation === 'buy' ? 'Покупать' : aiRecommendation.recommendation === 'urgent' ? 'Срочно' : 'Подождать'}
+          change={aiRecommendation.expectedChange < 0 ? `${aiRecommendation.expectedChange}% через ${aiRecommendation.timeUntilOptimal}` : 'Стабильно'}
+          changeType={aiRecommendation.expectedChange < 0 ? 'positive' : 'neutral'}
           delay={200}
         />
         <StatCard
           icon={<Layers className="w-4 h-4" />}
           label="Активных сетей"
-          value={`${Math.max(5, allNetworks.length)}`}
+          value={`${displayNetworks.length}`}
           change="ETH, L2s, Polygon"
           delay={300}
         />
@@ -379,7 +372,7 @@ const NetworksDashboard: React.FC = () => {
 
           {/* Сетка сетей - 1 колонка на мобильных, 2 на планшетах, 3 на десктопе */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
-            {allNetworks.map((network, index) => (
+            {displayNetworks.map((network, index) => (
               <div
                 key={network.chainId}
                 className="animate-scale-in"
@@ -532,7 +525,7 @@ const NetworksDashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {networks.map((network) => (
+                {displayNetworks.map((network) => (
                   <tr 
                     key={network.chainId} 
                     className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-all duration-300"

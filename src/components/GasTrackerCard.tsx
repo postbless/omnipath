@@ -3,57 +3,32 @@ import { TrendingDown, TrendingUp, Minus, Clock, Zap, Leaf, DollarSign } from 'l
 import type { GasPrice, AIPrediction } from '../types'
 import { formatGasPrice, getGasStatusColor, getGasStatusBgColor } from '../utils/formatters'
 import { getETHPrice, gweiToUSD } from '../api/ethPrice'
+import { getGasPrices } from '../api/gas'
 
-// Моковые данные для газа
-const MOCK_GAS_PRICES: Record<string, GasPrice> = {
-  ethereum: {
-    chainId: 1,
-    chainName: 'Ethereum',
-    timestamp: Date.now(),
-    prices: {
-      slow: {
-        maxPriorityFeePerGas: 0.5,
-        maxFeePerGas: 24.5,
-        estimatedTime: '~5 min',
-      },
-      average: {
-        maxPriorityFeePerGas: 1.2,
-        maxFeePerGas: 26.8,
-        estimatedTime: '~2 min',
-      },
-      fast: {
-        maxPriorityFeePerGas: 2.5,
-        maxFeePerGas: 30.2,
-        estimatedTime: '~30 sec',
-      },
+// Дефолтные данные (fallback)
+const DEFAULT_GAS_DATA: GasPrice = {
+  chainId: 1,
+  chainName: 'Ethereum',
+  timestamp: Date.now(),
+  prices: {
+    slow: {
+      maxPriorityFeePerGas: 0.5,
+      maxFeePerGas: 24.5,
+      estimatedTime: '~5 min',
     },
-    baseFee: 24,
-    trend: 'down',
-  },
-  arbitrum: {
-    chainId: 42161,
-    chainName: 'Arbitrum',
-    timestamp: Date.now(),
-    prices: {
-      slow: {
-        maxPriorityFeePerGas: 0.01,
-        maxFeePerGas: 0.08,
-        estimatedTime: '~2 min',
-      },
-      average: {
-        maxPriorityFeePerGas: 0.02,
-        maxFeePerGas: 0.12,
-        estimatedTime: '~45 sec',
-      },
-      fast: {
-        maxPriorityFeePerGas: 0.05,
-        maxFeePerGas: 0.18,
-        estimatedTime: '~15 sec',
-      },
+    average: {
+      maxPriorityFeePerGas: 1.2,
+      maxFeePerGas: 26.8,
+      estimatedTime: '~2 min',
     },
-    baseFee: 0.1,
-    trend: 'stable',
+    fast: {
+      maxPriorityFeePerGas: 2.5,
+      maxFeePerGas: 30.2,
+      estimatedTime: '~30 sec',
+    },
   },
+  baseFee: 24,
+  trend: 'stable',
 }
 
 // Моковые данные для ИИ-прогноза
@@ -74,19 +49,35 @@ interface TransactionType {
 }
 
 const GasTrackerCard: React.FC = () => {
-  const gasData = MOCK_GAS_PRICES.ethereum
+  const [gasData, setGasData] = useState<GasPrice>(DEFAULT_GAS_DATA)
   const prediction = MOCK_AI_PREDICTION
   const [ethPrice, setEthPrice] = useState<number>(2500)
 
   useEffect(() => {
-    // Получаем реальную цену ETH
-    getETHPrice().then(setEthPrice)
-    
+    // Получаем реальные данные
+    const fetchData = async () => {
+      try {
+        const [gasResponse, ethPriceValue] = await Promise.all([
+          getGasPrices(),
+          getETHPrice(),
+        ])
+
+        if (gasResponse.success && gasResponse.data.length > 0) {
+          const ethGas = gasResponse.data.find(g => g.chainId === 1)
+          if (ethGas) {
+            setGasData(ethGas)
+          }
+        }
+        setEthPrice(ethPriceValue)
+      } catch (error) {
+        console.warn('Failed to fetch gas data, using default:', error)
+      }
+    }
+
+    fetchData()
+
     // Обновляем каждые 30 секунд
-    const interval = setInterval(() => {
-      getETHPrice().then(setEthPrice)
-    }, 30000)
-    
+    const interval = setInterval(fetchData, 30000)
     return () => clearInterval(interval)
   }, [])
 
@@ -261,4 +252,4 @@ const GasTrackerCard: React.FC = () => {
 }
 
 export default GasTrackerCard
-export { MOCK_GAS_PRICES, MOCK_AI_PREDICTION }
+export { MOCK_AI_PREDICTION }
